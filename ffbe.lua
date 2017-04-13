@@ -4,7 +4,7 @@
 -- Nox
 -- http://ankulua.boards.net/thread/167/brave-exvius-ffbeauto-farming-explorations
 
-ver = "ffbeAuto Z8"
+ver = "ffbeAuto Z9"
 
 Settings:setCompareDimension(true, 600)
 Settings:setScriptDimension(true, 600)
@@ -77,6 +77,7 @@ tempbtn = nil
 battle_counter = 0
 move_counter = 0
 enable_bosscheck_counter = 20					-- when to enable bosscheck on explorations, will be adjusted automatically after a successful run
+bosses_encountered = 0
 screen = getAppUsableScreenSize()
 width = screen:getX(); height = screen:getY()
 aRatio = (width / height) / 1.6					-- Aspect ratio correction from 960 height 600 width which is 1.6 ratio
@@ -92,9 +93,9 @@ r_x = width/4; r_y = height/4; r_w = width/2; r_h = height/2
 mid_reg = Region(r_x,r_y,r_w,r_h)
 --mid_reg = Region(150,240,300,480)
 center = Location(300,480)
-diff = 100
-up = {center:offset(0,-diff)}
-down = {center:offset(0,diff)}
+diff = width/2.5
+up = {center:offset(0,-(height/3))}
+down = {center:offset(0,height/3)}
 left = {center:offset(-diff,0)}
 right = {center:offset(diff,0)}
 ul = {center:offset(-diff,-diff)}
@@ -138,14 +139,14 @@ explorePath = {}
 explorePath["earth_shrine_exploration"] ="bosscheck,30|up,2500|findmove|down,1|left,4000|right,3|up,5000|right,6000|down,1|right,4000|left,3|down,3750|right,1000|down,500|left,500|up,500|left,1000|up,9000|down,1|right,1000|up,1000|left,500|up,1|left,500|up,1|left,1|up,3750|down,3750|right,1000|down,2000|up,1|left,5750|right,6|up,4000|left,800|down,600,collect3|up,600|right,3|up,2500"
 explorePath["phantom_forest_exploration"] = "left,1|findmove|left,3000|down,1000|left,3000|right,2|up,2000|left,1000|up,2000|right,2500|up,1500|down,1500|left,2500|right,1|battle,ud,700,up|up,3000|right,3000|up,2000|right,3000|up,2000|left,2500|up,500|right,2000|down,500|right,500|down,2000|left,3000|down,2500|left,3000|down,1000|left,2000|up,2000|left,3000|down,4000|left,500|down,2500|left,1500|right,1|up,2000|right,2000|up,5000|right,500|up,4000|right,2000|up,500|left,4000|down,500|left,8000"
 explorePath["fulan_pass_exploration"] = "up,2000|left,2500|up,1000|left,5|up,3000|right,1|left,1|down,3000|left,1500|up,1500|left,1500|up,3000|right,3000|up,2500|left,1000|up,500|left,2500|up,3000|left,1500|right,1500|down,3000|right,3000|down,2|right,3000|up,2000|right,3500|up,2000|left,3000|up,2000|left,1|up,3000|right,3500|up,5000|down,2|right,2000|up,3000|left,4000|right,4000|down,3000|left,5000|up,500|left,1000|down,500|left,1000|down,2000|left,3500|up,1500|left,1500|up,6000"
-explorePath["maranda_coast_exploration"] = "bosscheck,37|down,500|findmove|down,8000|up,13|left,5000|down,1000|right,10|up,3500,collect1|left,500|down,5000|up,7|battle,lr,2900,left|left,10000|up,4000|left,4000|up,2000,collect2|down,2000|up,2|left,3000|left,4000,zone2|findmove|down,500,collect3|right,4000|left,2|down,3000|left,500|down,3000|left,1000|up,1000|left,4000|right,2|up,2000|left,15|down,3000|left,1500|up,2000|left,1000,collect4|right,2000|up,3000|battle,lr,7300,left|left,8000|up,3000|right,1500|up,2000|right,1500|up,1000|right,2000|down,500,collect5|left,2000|down,1500|left,3000|right,3|up,6000"
+explorePath["maranda_coast_exploration"] = "bosscheck,35|down,500|findmove|down,8000|up,13|left,5000|down,1000|right,10|up,3500,collect1|left,500|down,5000|up,7|battle,lr,2900,left|left,10000|up,4000|left,4000|up,2000,collect2|down,2000|up,2|left,3000|left,4000,zone2|findmove|down,500,collect3|right,4000|left,2|down,3000|left,500|down,3000|left,1000|up,1000|left,4000|right,2|up,2000|left,15|down,3000|left,1500|up,2000|left,1000,collect4|right,2000|up,3000|battle,lr,7300,left|left,8000|up,3000|right,1500|up,2000|right,1500|up,1000|right,2000|down,500,collect5|left,2000|down,1500|left,3000|right,3|up,6000"
 explorePath["dalnakya_cavern_harvest_exploration"] = "down,1000|right,1500|up,1000|right,4500|down,1000|right,3500|up,2|left,2000,collect1|down,2|left,3000|up,1000|left,9|down,4000|left,1000|down,2|left,1|down,6,collect2|right,1500|down,2000|left,1000|down,1000|left,1000|down,6|right,2000|up,2|right,3000|up,1000|right,1500,collect3|left,1500|down,2000|left,3000|down,1000|left,2000|down,1500|left,1500|down,2000|left,1500|down,1500|left,1500|down,3000|down,1500,zone2|left,1500|down,1|left,1000,collect4|right,2000|up,3|right,1500|down,1500|right,2000|up,1000|right,1000|up,1500|right,3000,collect5|left,3000|down,1500|left,1000|down,1000|left,2000|down,3000|down,3000,bosszone|down,3000|down,1500|down,1500,extraforboss|right,1500|down,3000|down,2000,3collectzone|up,2|right,1500,collect|left,1|up,2|left,1500|right,1500|down,6000"
 explorePath["orbonne_monastery_vault_exploration"] = "up,1000|findmove|down,1|left,1000,collect1|up,2500|right,1000|up,1000|left,1500|up,2000|up,2000,collect2|down,2000|right,1000|down,500|right,1000|down,500,collect3|up,500|left,5|down,2000|right,2000|down,2000|left,2000|up,1000|left,2000|down,9|left,4|up,2000|left,3000|right,2|up,1500|left,2000|left,2|down,1500|right,1500|up,1500|right,2000|down,1500|right,2000|down,2000|up,1|left,500|down,500|left,500|up,500|left,500|up,500|left,16|down,5000|right,3500|up,2000|down,1|right,3000|down,2000|left,5000,collect5|down,4000|right,6000|right,6000"
 explorePath["wolfsfang_peak_exploration"] = "right,1500|findmove|left,1|findmove|up,1|findmove|up,1|findmove|up,1|findmove|up,1|findmove|up,1|right,6000|up,1000|right,500|up,1500|right,2500|up,1500|left,3000|findmove|right,1|findmove|right,1|findmove|right,1|up,1500|up,500|right,2000|up,5500|left,1500|up,2|left,1500|right,2|up,3000|left,1500|down,1|right,2|up,1000|right,500|down,1|right,2500|down,3500|up,4|battle,lr,1977,right|right,3000|left,2|up,1500|left,5|up,1500|left,2|up,1000|left,1500|up,1|right,1000|up,1|right,1|right,500|up,500|right,2|up,500|left,1|up,1|left,6000|up,1500|right,2000|left,1|up,500|right,1|up,1500|right,1|up,1|right,1|up,1000|left,2|up,1|left,1|up,2000|right,1|up,500|left,1|up,1000|left,3|up,500|right,1000|up,1000|battle,lr,3500,right|right,3000|up,6500"
 explorePath["dwarves_forge_exploration"] = "right,1000|ur,4000|down,3000|up,3000|dl,1000|dl,5000|up,6000|ur,3000|up,4000|left,1000|up,5000|battle,ud,3204,up|right,1000|down,4000|left,1|down,1000|left,6000|left,4000|ul,4000|down,5000|dr,2000|dr,2000|right,5000|down,1|down,3000|left,3000|down,1000|left,1000|up,1000|left,3000|ur,2000|left,4000|up,1000|right,5000|ur,1000|right,4000|right,8000|right,4000|right,4000|dl,3000|left,5000|up,1|up,3000|right,4000|ul,2000|up,6000|right,1000|up,2000|ul,2000|up,3000|ur,2000|battle,ud,7888,up|ul,2000|up,2000|ur,2000|up,2000|up,4000|right,3000|down,2000|left,3000|down,1000|right,3000|down,3000|left,1000|dl,2000|left,5000|up,1000|ur,3000|ul,2000|up,4000|left,4000|up,1000|left,3000|ur,4000|down,1000|dl,5000|right,4000|up,1000|ur,9000"
 explorePath["water_shrine_exploration"] = "leaveafterboss|bosscheck,40|right,700|up,2000|right,2500|up,1800|down,1800|left,1|down,1200|left,1950|up,700|left,5|up,3000|up,2100|right,1500|down,3|right,1500|battleex,lr,4820,14,4500,right|right,4000|left,1|up,2700|down,4|right,1200|right,8500|down,1|left,9000|down,3000|left,3000|up,1200|left,4|up,2500|left,2000|right,1|up,2000|down,4|left,4500|right,3|up,2000|up,2300|right,4000|battleex,lr,11188,29,8000,right|right,8000|left,17|up,3000|up,3000"
-explorePath["invincible_interior_exploration"] = "leaveafterboss|bosscheck,75|up,6500|down,9|right,5000|left,1|down,700|left,700|down,2|left,1|down,700|right,700|down,2|right,600|down,600|left,700|down,3000|down,3800|battleex,lr,6631,14,3500,left|left,4500|up,1|right,4500|up,3000|up,8000|up,5000|right,1|up,500|wait,8500|up,1|right,2500|battleex,ud,15300,29,3250,down|down,4000|up,3|left,3500|down,1250|down,1800|right,5000|left,2|down,4500|up,5|left,700|up,3000|down,2|left,3100|right,3|down,14|left,1250|left,2000|down,3500|left,2500|down,11|left,3000|up,4750|right,3500|left,11|down,10|down,12|right,2500|up,3250|right,5|up,3000|right,3000|right,1000|left,1|down,5000|down,2800|right,800|up,2300|right,1250|up,2|left,3200|up,1000|right,1250|up,2|left,3000|up,1|right,7|up,700|right,1250|up,3200|up,10000|up,2000|right,1|up,500"
-explorePath["wind_shrine_exploration"] = "leaveafterboss|bosscheck,44|right,3800|left,12|up,3000|right,400|up,700|left,2|up,1500|left,700|up,700|left,1500|right,1|up,2000|left,3|down,3500|right,3000|up,800|left,3000|up,3500|left,2000|up,3000|right,2800|down,2500|right,3000|battleex,ud,3870,14,2800,up|up,3700|left,1|up,3000|right,3000|up,700|down,1|right,2500|left,3000|down,1000|left,2500|up,3000|right,700|battleex,ud,10500,29,2600,up|up,3000|left,2|up,7|left,3700|up,1|right,2800|up,1|right,6|up,1500|up,8000|up,1000"
+explorePath["invincible_interior_exploration"] = "leaveafterboss|bosscheck,74|up,6500|down,9|right,5000|left,1|down,700|left,700|down,2|left,1|down,700|right,700|down,2|right,600|down,600|left,700|down,3000|down,3800|battleex,lr,6631,14,3500,left|left,4500|up,1|right,4500|up,3000|up,8000|up,5000|right,1|up,500|wait,8500|up,1|right,2500|battleex,ud,15300,29,3250,down|down,4000|up,3|left,3500|down,1250|down,1800|right,5000|left,2|down,4500|up,5|left,700|up,3000|down,2|left,3100|right,3|down,14|left,1250|left,2000|down,3500|left,2500|down,11|left,3000|up,4750|right,3500|left,11|down,10|down,12|right,2500|up,3250|right,5|up,3000|right,3000|right,1000|left,1|down,5000|down,2800|right,800|up,2300|right,1250|up,2|left,3200|up,1000|right,1250|up,2|left,3000|up,1|right,7|up,700|right,1250|up,3200|up,10000|up,2000|right,1|up,500"
+explorePath["wind_shrine_exploration"] = "leaveafterboss|bosscheck,42|right,3800|left,12|up,3000|right,400|up,700|left,2|up,1500|left,700|up,700|left,1500|right,1|up,2000|left,3|down,3500|right,3000|up,800|left,3000|up,3500|left,2000|up,3000|right,2800|down,2500|right,3000|battleex,ud,3870,14,2800,up|up,3700|left,1|up,3000|right,3000|up,700|down,1|right,2500|left,3000|down,1000|left,2500|up,3000|right,700|battleex,ud,10500,29,2600,up|up,3000|left,2|up,7|left,3700|up,1|right,2800|up,1|right,6|up,1500|up,8000|up,1000"
 explorePath["fire_shrine_exploration"] = "leaveafterboss|bosscheck,90|left,500|up,2750|right,1|up,2|left,4|down,1|up,1|right,4500|up,500|right,5|up,1000|right,2500|down,2250|left,1500|down,2250|left,1|down,2000|right,2250|down,2000|right,500|left,500|up,2000|left,3500|up,1|right,1500|up,2000|right,1750|left,1|battleex,ud,4350,14,2000,up|up,2500|right,1|up,1500|left,3000|down,3000|left,3000|left,15|up,2350|up,9|right,2500|down,2500|right,2250|right,2500|up,1|right,2750|up,2500|left,2500|up,500|left,1500|down,800|up,800|right,1500|down,1|right,2000|down,2500|left,3500|down,1|left,3100|left,2000|up,800|right,1|up,2500|left,1000|battleex,lr,11040,29,3200,left|left,4500|down,2750|left,2250|left,4500|up,300|right,1|down,3750|down,4350|right,1|up,2750|right,2750|left,1|up,3500|up,1750|down,2500|down,3500|left,3500|right,2|up,3750|up,3500|right,500|down,1500|right,4500|right,2000|left,1|up,3100|ur,5000|ur,5000|left,1|up,2500|up,3000|up,3000"
 
 --allow 2 or more steps of bosscheck before the boss for safety reasons
@@ -268,25 +269,41 @@ function selectDungeon()
 end
 
 function chaosExploraton()
+	local count = 0
 	local random_1 = math.random(8)
 	local random_2 = math.random(450+(lagx*100),7250+(lagx*250))
 	
-	if(debug_mode) then runlog("Chaos Exploration Start!",true) end	
+	if(debug_mode) then runlog("Random Exploration Start!",true)
+	else
+		toast("Random exploration, please stop and manually finish.")
+	end	
 
 	leave_after_boss = true
 	
 	while(true) do
 		if (finished_explore == true) then break end
-		random_1 = math.random(8)
+		count = count + 1
+		random_1 = math.random(12)
 		random_2 = math.random(450+(lagx*100),7250+(lagx*250))
-		if (random_1 == 1) then go(left,random_2)
+		if (random_1 == 1) then go("left",random_2)
 		elseif (random_1 == 2) then go("right",random_2)
 		elseif (random_1 == 3) then go("up",random_2)
 		elseif (random_1 == 4) then go("down",random_2)
-		elseif (random_1 == 5) then go("ul",random_2*1.5)
-		elseif (random_1 == 6) then go("ur",random_2*1.5)
-		elseif (random_1 == 7) then go("dl",random_2*1.5)
-		elseif (random_1 == 8) then go("dr",random_2*1.5)
+		elseif (random_1 == 5 or random_1 == 9) then go("ul",random_2*1.5)
+		elseif (random_1 == 6 or random_1 == 10) then go("ur",random_2*1.5)
+		elseif (random_1 == 7 or random_1 == 11) then go("dl",random_2*1.5)
+		elseif (random_1 == 8 or random_1 == 12) then go("dr",random_2*1.5)
+		end
+		if (count%13 == 0) then
+			if(debug_mode) then runlog("Exploration failure.",true)
+			else
+				toast("Exploration failure.")
+			end	
+		elseif (count%17 == 0) then
+			if(debug_mode) then runlog("Please finish manually.",true)
+			else
+				toast("Please finish manually.")
+			end	
 		end
 	end
 end
@@ -404,7 +421,7 @@ function checkGold(limit)
 --			if(debug_mode) then runlog("Gold coin exists",true) end
 
 			if(gold_reg == nil) then 
-				gold_reg = Region(getLastMatch():getX()+40,getLastMatch():getY()+3,135,70*aRatio)
+				gold_reg = Region(getLastMatch():getX()+40,getLastMatch():getY()+2,135,75*aRatio)
 				if(debug_mode) then gold_reg:save("gold_reg.png") end
 			else
 				gold_reg:highlight(0.25)
@@ -516,6 +533,18 @@ function exploreBattle()
 	local auto_pressed = 0
 	local findUnit = nil
 	
+	for i=0,10000 do
+		usePreviousSnap(false)
+		if (bottom_reg:exists(menuinbattle,0)) then break end
+		usePreviousSnap(true)
+		if (bottom_reg:exists(autobtn,0)) then break end
+		if (bottom_reg:exists(autoonbtn,0)) then break end
+		if (i > 100 and bottom_reg:exists(menu,0)) then return false end
+		if (i > 200 and findMove()) then return false end
+	end
+	
+	usePreviousSnap(false)
+
 	if(debug_mode) then runlog("Explore battle start",true) end
 	for i=0,300000 do
 		if(exists(results,0)) then
@@ -560,11 +589,18 @@ function exploreBattle()
 
 	if(debug_mode) then
 		runlog("Battle done: "..battle_counter,true) 
-	else
-		toast("Battle done: "..battle_counter)
+--	else
+--		toast("Battle done: "..battle_counter)
 	end
 
-	wait(0.2+lagx/5)
+	for i=0,1000 do
+		usePreviousSnap(false)
+		if (bottom_reg:exists(menu,0)) then break end
+		usePreviousSnap(true)
+		if (findMove()) then break end
+	end	
+	
+	return true
 end
 
 function exploreLeave()
@@ -607,7 +643,9 @@ function bossBattle()
 
 	usePreviousSnap(false)
 
-	if (enable_bosscheck_counter+8 <= move_counter) then enable_bosscheck_counter = move_counter - 3 end
+	if (bosses_encountered == 0 and enable_bosscheck_counter+4 <= move_counter) then enable_bosscheck_counter = move_counter - 3 end
+	
+	bosses_encountered = bosses_encountered + 1
 
 	for i=0,30000 do
 --		usePreviousSnap(false)
@@ -893,11 +931,13 @@ function go(loc,steps)
 			end
 			usePreviousSnap(false)
 --			wait(0.25+lagx/2)
-			if((not findMove()) and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,1.25+2*lagx)) then 
+			if((not findMove()) and not (bottom_reg:exists(menu,0))) then 
 				exploreBattle()
 				if (move_counter >= enable_bosscheck_counter) then
+					move_counter = move_counter - 1
 					go(loc,steps)
 				else
+					move_counter = move_counter - 1
 					go(loc,steps-math.max(0,i-3))
 				end
 			elseif(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
@@ -905,7 +945,7 @@ function go(loc,steps)
 				go(loc,steps-math.max(0,i-2))
 			end
 		else
-			if (not findMove() and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,1.25+2*lagx)) then exploreBattle() end
+			if (not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() end
 			for i=1,steps do
 				if(debug_mode) then runlog("Step #"..i.." of "..steps,true) end
 				if(alt_step) then click((_G[loc])[2]) ; wait(0.1)
@@ -915,7 +955,7 @@ function go(loc,steps)
 				end
 				wait(0.1+math.max(0,(lagx-1)/3))
 				if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
-				elseif(not findMove() and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,1.25+2*lagx)) then exploreBattle() end
+				elseif(not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() end
 			end
 		end
 	else -- swiping
@@ -926,9 +966,9 @@ function go(loc,steps)
 			dragDrop(center,_G[loc][1])
 			wait(0.1+math.max(0,(lagx-1)/5))
 			if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
-			elseif(not findMove() and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,1.25+2*lagx)) then exploreBattle(); go(loc,steps) end
+			elseif(not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() ; move_counter = move_counter - 1 ; go(loc,steps) end
 		else
-			if (not findMove() and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,1.25+2*lagx)) then exploreBattle() end
+			if (not findMove() and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,2.25+2*lagx)) then exploreBattle() end
 			for i=1,steps do -- single step click
 				if(debug_mode) then runlog("Step #"..i.." of "..steps,true) end
 				if(alt_step) then click((_G[loc])[2]) ; wait(0.1)
@@ -938,7 +978,7 @@ function go(loc,steps)
 				end
 				wait(0.1+math.max(0,(lagx-1)/3))
 				if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.3+lagx/2)) then bossBattle()
-				elseif (not findMove() and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,1.25+2*lagx)) then exploreBattle() end
+				elseif (not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() end
 			end
 		end
 	end
@@ -1017,6 +1057,7 @@ end
 function explore2(location)
 	battle_counter = 0
 	move_counter = 0
+	bosses_encountered = 0
 	finished_explore = false
 	
 	if (goldcheck_success == false) then gold_reg = nil end
@@ -1044,6 +1085,13 @@ function explore2(location)
 		elseif(v:split(",")[1]=="wait") then 
 			if(debug_mode) then runlog("Wait "..(tonumber(v:split(",")[2]) * (1+lagx/4)).." ms",true) end
 			wait((tonumber(v:split(",")[2]) * (1+lagx/4))/1000) -- wait a while
+		elseif(v:split(",")[1]=="transition") then 
+			if(debug_mode) then runlog("Transition "..(tonumber(v:split(",")[2]) * (1+lagx/4)).." ms",true) end
+			wait((tonumber(v:split(",")[2]) * (1+lagx/4))/1000) -- wait a while
+			while (true) do
+				if (exists(menu,0)) then break end
+				if (findMove()) then break end
+			end
 		elseif(v:split(",")[1]=="leaveafterboss") then
 --			if(debug_mode) then runlog("Leaving after boss",true) end		
 			leave_after_boss = true -- leave after boss battle
