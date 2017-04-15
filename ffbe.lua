@@ -4,7 +4,7 @@
 -- Nox
 -- http://ankulua.boards.net/thread/167/brave-exvius-ffbeauto-farming-explorations
 
-ver = "ffbeAuto Z9"
+ver = "ffbeAuto Z10"
 
 Settings:setCompareDimension(true, 600)
 Settings:setScriptDimension(true, 600)
@@ -57,11 +57,13 @@ lapis = Pattern("Lapis.png"):similar(0.7)
 friend = Pattern("friend.png"):similar(0.7)
 insufficient_raid_orbs = Pattern("insufficient_raid_orbs.png"):similar(0.75)
 raid_orbs_no = Pattern("raid_orbs_no.png"):similar(0.7)
+revive = Pattern("lapis_revive.png"):similar(0.7)
 
 lagx = 1.0
 lagc = 1.0
 help_screen = false
 use_bonus_unit = false
+use_highest_atk_companion = false
 use_esper_battle = false
 continue_on_gameover = true
 --always_findmove = false
@@ -70,6 +72,8 @@ leave_after_boss = false
 finished_explore = false
 depart_count = 0
 max_depart_count = 99999
+gameover_count = 0
+lapis_refill_count = 0
 --colosseumTimer = Timer() -- set timer for colosseum schedule
 alt_step=true
 gold_reg = nil
@@ -80,7 +84,6 @@ enable_bosscheck_counter = 20					-- when to enable bosscheck on explorations, w
 bosses_encountered = 0
 screen = getAppUsableScreenSize()
 width = screen:getX(); height = screen:getY()
-aRatio = (width / height) / 1.6					-- Aspect ratio correction from 960 height 600 width which is 1.6 ratio
 left_reg = Region(0,0,300,1200)
 right_reg = Region(300,0,600,1200)
 top_reg = Region(0,0,600,480)
@@ -102,6 +105,8 @@ ul = {center:offset(-diff,-diff)}
 ur = {center:offset(diff,-diff)}
 dl = {center:offset(-diff,diff)}
 dr = {center:offset(diff,diff)}
+
+aRatio = 1
 
 top = Location(300,150)
 bottom = Location(300,750)
@@ -282,6 +287,7 @@ function chaosExploraton()
 	
 	while(true) do
 		if (finished_explore == true) then break end
+		if (exists(revive,0)) then break end
 		count = count + 1
 		random_1 = math.random(12)
 		random_2 = math.random(450+(lagx*100),7250+(lagx*250))
@@ -318,23 +324,17 @@ function findBattle(loot_direction,limit,exit_direction)
 
 	-- no bosscheck
 	enable_bosscheck_counter = 100000
-	
-	-- reduce lagx
---	lagx = lagx / 5
-	
+		
 	for i=0, 100 do 
+		if(exists(revive,0)) then return end
 		toast("Lap "..i)
 		local count = battle_counter
 		if(loot_direction == "lr") then
-			go("left",1500+1750*lagx)
-			go("left",1500+1750*lagx)
-			go("right",1500+1750*lagx)
-			go("right",1500+1750*lagx)
+			go("left",2500+1750*lagx)
+			go("right",2500+1750*lagx)
 		elseif(loot_direction == "ud") then
-			go("up",1500+1750*lagx)
-			go("up",1500+1750*lagx)
-			go("down",1500+1750*lagx)
-			go("down",1500+1750*lagx)
+			go("up",2500+1750*lagx)
+			go("down",2500+1750*lagx)
 		end
 		locBattleCount = locBattleCount + battle_counter - count
 		if (battle_counter > count) then
@@ -349,10 +349,7 @@ function findBattle(loot_direction,limit,exit_direction)
 
 	toast("Exiting farming...")
 	go(exit_direction,1234);go(exit_direction,2345)
-	
-	-- restore lagx
---	lagx = lagx * 5
-	
+		
 	-- restore optimization variables
 	enable_bosscheck_counter = lastEnableBossCheck
 	move_counter = lastMoveCounter
@@ -374,6 +371,7 @@ function findBattleEx(loot_direction,limit,battle_limit,run_length,exit_directio
 --	lagx = lagx / 5
 	
 	for i=0, 100 do 
+		if(exists(revive,0)) then return end
 		toast("Lap "..i)
 		local count = battle_counter
 		if(loot_direction == "lr") then
@@ -421,7 +419,7 @@ function checkGold(limit)
 --			if(debug_mode) then runlog("Gold coin exists",true) end
 
 			if(gold_reg == nil) then 
-				gold_reg = Region(getLastMatch():getX()+40,getLastMatch():getY()+2,135,75*aRatio)
+				gold_reg = Region(getLastMatch():getX()+40,getLastMatch():getY()+1,135,41*aRatio)
 				if(debug_mode) then gold_reg:save("gold_reg.png") end
 			else
 				gold_reg:highlight(0.25)
@@ -455,7 +453,6 @@ function checkGold(limit)
 end
 
 function resultsExit()
-	local revive = Pattern("lapis_revive.png")
 	local giveup = Pattern("giveupnow.png")
 	local numfunc = 8
 	local e_nextbtn = false
@@ -472,8 +469,8 @@ function resultsExit()
 		if(top_reg:exists(backbtn,0)) then break end		
 		if(top_reg:exists(lapis,0)) then break end
 		if(exists(lapis_results,0)) then break end
-		if(exists(revive,0)) then gameOverNoWait(); break end
-		if(exists(giveup,0)) then gameOverNoWait(); break end
+		if(exists(revive,0)) then gameOver(); break end
+		if(exists(giveup,0)) then gameOver(); break end
 	end
 
 	for i=0, 3000000 do
@@ -481,21 +478,6 @@ function resultsExit()
 		if(top_reg:exists(backbtn,0)) then break end
 		usePreviousSnap(true)
 		existsClick(results_big,0)
---[[		if(i > 0 and i%17==0) then connectionCheck() end
-		if(i > 0 and i%13==0) then gameOverNoWait() end
-		if(exists(revive,0)) then gameOver(); break end
-		if(exists(rank_up,0)) then 
-			if(debug_mode) then runlog("Rank up",true) end
-			click(getLastMatch())
-		end
-		if(bottom_reg:existsClick(nextbtn,0) and debug_mode) then runlog("\tnextbtn") end
-		if(bottom_reg:existsClick(nextbtn2,0) and debug_mode) then runlog("\tnextbtn2") end
-		if(bottom_reg:existsClick(next_mission,0) and debug_mode) then runlog("\tnextmission") end
-		if(left_reg:existsClick(no_request,0) and debug_mode) then runlog("\tDon\'t request") end
-		if(exists(closebtn,0)) then 
-			if(debug_mode) then runlog("\tclosebtn") end
-			click(getLastMatch())
-		end]]
 		
 		if (i%numfunc == 0 and (bottom_reg:existsClick(nextbtn,0)) and debug_mode) then
 			runlog("Next 1")
@@ -582,6 +564,7 @@ function exploreBattle()
 		if(exists(menu,0)) then break end
 		usePreviousSnap(true)
 		if(top_reg:exists(battle_won,0) or top_reg:exists(battle_won2,0) or top_reg:exists(continue_ask,0)) then break end
+		if(exists(revive,0)) then return end
 		usePreviousSnap(false)
 	end
 	usePreviousSnap(false)
@@ -607,6 +590,8 @@ function exploreLeave()
 	local rain_found = 0
 
 	if(debug_mode) then runlog("Attempting to leave",true) end
+
+	if(exists(revive,0)) then return end
 
 	for i=0,900000 do
 		click(center)
@@ -639,6 +624,7 @@ function bossBattle()
 		existsClick(explore_yes,0)
 		usePreviousSnap(true)
 		if(control_reg:exists(menuinbattle,0)) then exploreBattle(); break end
+		if(exists(revive,0)) then return end
 	end
 
 	usePreviousSnap(false)
@@ -648,6 +634,7 @@ function bossBattle()
 	bosses_encountered = bosses_encountered + 1
 
 	for i=0,30000 do
+		if(exists(revive,0)) then return end
 --		usePreviousSnap(false)
 		existsClick(battle_won,0)
 --		usePreviousSnap(true)
@@ -658,6 +645,7 @@ function bossBattle()
 			break
 		elseif(existsClick(explore_continue,0)) then break end
 		if(bottom_reg:exists(menu,0)) then break end
+		if(exists(revive,0)) then return end
 	end
 
 	usePreviousSnap(false)
@@ -665,6 +653,9 @@ function bossBattle()
 end
 
 function finishExplore()
+
+	if(exists(revive,0)) then return end
+
 	if(not finished_explore and top_reg:exists(sense_hostile)) then 
 		if(debug_mode) then runlog("Boss found") end
 		bossBattle()
@@ -698,6 +689,7 @@ function freeFarm()
 	dialogShow("Which direction?")
 	findMove()
 	enable_bosscheck_counter = 100000
+	continue_on_gameover = false				-- never continue with free farm
 	lagx = (0.01 * lagx) + 0.07
 	while true do
 		if(direction == 1) then
@@ -757,8 +749,13 @@ function fFarm(location)
 	local tempi = 0
 	local func_state = 0
 	local departed = false
-	local revive = Pattern("lapis_revive.png")
-		
+	local findComp = nil
+	local findCompReg = nil
+	local compATK = -1
+	local highestATK = -1
+	local highestATKBtn = nil
+	local returnval = false
+	
 	while (true) do
 		if (departed == false) then 
 
@@ -796,7 +793,7 @@ function fFarm(location)
 				if(refill) then 
 					toast("Burning lapis..."); if(debug_mode) then runlog("Refill lapis") end
 					existsClick(refill_lapis,0)
-					if (existsClick(yesbtn,0)) then wait(lagx) ; func_state = 0 end
+					if (existsClick(yesbtn,0)) then wait(lagx) ; func_state = 0 ; lapis_refill_count = lapis_refill_count + 1 end
 				elseif(existsClick(raid_orbs_no,0)) then
 					func_state = 0
 					math.randomseed(os.time()); toast(waitmsg[math.random(#waitmsg)].. " now... Come back way later."); wait(90+lagx*3*math.random(1,4)*math.random(1,30))
@@ -813,7 +810,7 @@ function fFarm(location)
 				if(refill) then 
 					toast("Burning lapis..."); if(debug_mode) then runlog("Refill lapis") end
 					existsClick(refill_lapis,0); 
-					if (existsClick(yesbtn,0)) then wait(lagx) ; func_state = 0 end
+					if (existsClick(yesbtn,0)) then wait(lagx) ; func_state = 0  ; lapis_refill_count = lapis_refill_count + 1 end
 				elseif (bottom_reg:existsClick(backbtn,0)) then 
 					func_state = 0
 					math.randomseed(os.time()); toast(waitmsg[math.random(#waitmsg)].. " now... Come back later."); wait(35+lagx*math.random(1,35))
@@ -840,8 +837,26 @@ function fFarm(location)
 					if(debug_mode) then getLastMatch():highlight(0.2) ; runlog("Companion : Bonus", true) end
 					click(tempbtn)
 					func_state = 0
-				elseif(right_reg:existsClick(friend,0)) then
-					if(debug_mode) then getLastMatch():highlight(0.2) ; runlog("Companion : Standard", true) end
+				elseif(left_reg:exists(friend,0)) then
+					if (use_highest_atk_companion == false) then
+						existsClick(friend,0)
+						if(debug_mode) then getLastMatch():highlight(0.2) ; runlog("Companion : Standard", true) end
+					else
+						findComp = findAllNoFindException(friend)
+						for i,u in ipairs(findComp) do
+							findCompReg = Region(u:getX()+37,u:getY(),112,35)
+							findCompReg:highlight(0.15)
+							compATK, returnval = numberOCRNoFindException(findCompReg,"gil")
+							if (returnval) then
+								if(debug_mode) then runlog("CompATK :"..compATK,true) end
+								if (compATK > highestATK) then
+									highestATK = compATK
+									highestATKBtn = u
+								end
+							end
+						end
+						click (highestATKBtn)
+					end
 					func_state = 0
 				elseif(top_reg:exists(no_companion,0)) then
 					tempbtn = top_reg:getLastMatch()
@@ -933,6 +948,7 @@ function go(loc,steps)
 --			wait(0.25+lagx/2)
 			if((not findMove()) and not (bottom_reg:exists(menu,0))) then 
 				exploreBattle()
+				if(exists(revive,0)) then return end
 				if (move_counter >= enable_bosscheck_counter) then
 					move_counter = move_counter - 1
 					go(loc,steps)
@@ -955,7 +971,7 @@ function go(loc,steps)
 				end
 				wait(0.1+math.max(0,(lagx-1)/3))
 				if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
-				elseif(not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() end
+				elseif(not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() ; if(exists(revive,0)) then return end end
 			end
 		end
 	else -- swiping
@@ -966,9 +982,9 @@ function go(loc,steps)
 			dragDrop(center,_G[loc][1])
 			wait(0.1+math.max(0,(lagx-1)/5))
 			if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
-			elseif(not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() ; move_counter = move_counter - 1 ; go(loc,steps) end
+			elseif(not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() ; if(exists(revive,0)) then return end ; move_counter = move_counter - 1 ; go(loc,steps) end
 		else
-			if (not findMove() and not (bottom_reg:exists(menu,0)) and bottom_reg:exists(menuinbattle,2.25+2*lagx)) then exploreBattle() end
+			if (not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() ; if(exists(revive,0)) then return end end
 			for i=1,steps do -- single step click
 				if(debug_mode) then runlog("Step #"..i.." of "..steps,true) end
 				if(alt_step) then click((_G[loc])[2]) ; wait(0.1)
@@ -978,7 +994,7 @@ function go(loc,steps)
 				end
 				wait(0.1+math.max(0,(lagx-1)/3))
 				if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.3+lagx/2)) then bossBattle()
-				elseif (not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() end
+				elseif (not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() ; if(exists(revive,0)) then return end end
 			end
 		end
 	end
@@ -1026,7 +1042,6 @@ function colosseumBattle()
 end
 
 function gameOver()
-	local revive = Pattern("lapis_revive.png")
 	local giveup = Pattern("giveupnow.png")
 
 	usePreviousSnap(false)
@@ -1037,11 +1052,10 @@ function gameOver()
 			scriptExit("Game Over")
 		end
 	end
-	if(exists(giveup,lagx/2)) then existsClick(yesbtn); wait(1+(2*lagx)) end
+	if(exists(giveup,lagx/2)) then existsClick(yesbtn); wait(2+(2*lagx)); gameover_count = gameover_count + 1 end
 end
 
 function gameOverNoWait()
-	local revive = Pattern("lapis_revive.png")
 	local giveup = Pattern("giveupnow.png")
 	
 	if(exists(revive,0)) then 
@@ -1051,7 +1065,7 @@ function gameOverNoWait()
 			scriptExit("Game Over")
 		end
 	end
-	if(exists(giveup,0)) then existsClick(yesbtn) end
+	if(exists(giveup,0)) then existsClick(yesbtn) ; gameover_count = gameover_count + 1 end
 end
 
 function explore2(location)
@@ -1075,7 +1089,8 @@ function explore2(location)
 	findMove()
 	
 	for i,v in pairs(getPath(explorePath[location])) do
-		if (finished_explore) then	break end
+		if(finished_explore) then	break end
+		if(exists(revive,0)) then return end
 		
 		if(v:split(",")[1]=="battle") then -- find battle
 			if(loot) then findBattle(v:split(",")[2],tonumber(v:split(",")[3]),v:split(",")[4]) end
@@ -1261,7 +1276,6 @@ end
 
 function battleAuto()
 	local tempi = 0
-	local revive = Pattern("lapis_revive.png")
 
 	while(true) do
 		tempi = tempi + 1
@@ -1269,7 +1283,7 @@ function battleAuto()
 		if(existsClick(autobtn,lagx/4) and debug_mode) then runlog("Auto : ") end
 		usePreviousSnap(true)
 		if(tempi%19==0) then connectionCheckNoWait() end
-		if(tempi%17==0 and exists(revive,0)) then gameOver(); break end
+		if(tempi%17==0 and exists(revive,0)) then break end
 		if(exists(results_big,0)) then click(getLastMatch()) ; click(center) ; break end
 		if(exists(questclear,0)) then break end
 		if(not exists(menuinbattle,0)) then break end
@@ -1281,7 +1295,6 @@ end
 function battleEsper()
 	local tempi = 0
 	local esperfilled = Pattern("SB_EsperFilled.png"):similar(0.7)
-	local revive = Pattern("lapis_revive.png")
 	local IsReady = Pattern("SB_MyTurn.png")
 	--boss = (boss or false)
 	local auto_pressed = false
@@ -1320,7 +1333,7 @@ function battleEsper()
 		end
 		usePreviousSnap(true)
 		if(bottom_reg:exists(menu,0) or top_reg:exists(battle_won,0) or top_reg:exists(battle_won2,0) or top_reg:exists(continue_ask,0)) then break end
-		if(tempi%17==0 and exists(revive,0)) then gameOver(); break end
+		if(tempi%17==0 and exists(revive,0)) then break end
 		if(exists(results_big,0)) then click(getLastMatch()) ; click(center) ; click(Location(300,890 * aRatio)) ; break end
 		if(exists(questclear,0)) then break end
 		if(not exists(menuinbattle,0)) then break end
@@ -1331,7 +1344,6 @@ end
 function smartBattle()
 	local tempi = 0
 	local num_turns = 0
-	local revive = Pattern("lapis_revive.png")
 	local BackButton = Pattern("backbutton.png"):similar(0.8)
 	local IsReady = Pattern("SB_MyTurn.png")
 	local unit1Error = 0
@@ -1355,7 +1367,7 @@ function smartBattle()
 		usePreviousSnap(false)
 		if(exists(results_big,lagx/2)) then click(center) ; click(Location(300,890 * aRatio)) ; break end
 		usePreviousSnap(true)
-		if(tempi%10==0 and exists(revive,0)) then gameOver(); break end
+		if(tempi%10==0 and exists(revive,0)) then break end
 		if(tempi%13==0) then connectionCheckNoWait() end
 		if(exists(questclear,0)) then break end
 		
@@ -1415,8 +1427,13 @@ newRow()
 addCheckBox("debug_mode", "Debug mode?", false)
 addCheckBox("refill", "Refill Energy?", false)
 newRow()
-addCheckBox("bonus_unit_menu", "Use Bonus Companion?", false)
-addCheckBox("continue_on_gameover", "Continue on GameOver?", true)
+addCheckBox("continue_on_gameover", "Retry on GameOver (No Lapis)?", true)
+newRow()
+addTextView("Companion mode :")
+addRadioGroup("comp_mode", 1)
+addRadioButton("Any", 1)
+addRadioButton("Use Bonus", 2)
+addRadioButton("Highest ATK", 3)
 newRow()
 addTextView("Battle mode :")
 addRadioGroup("battle_mode", 1)
@@ -1489,14 +1506,21 @@ if(debug_mode) then config_log:save("run.log") end
 if(dimscreen) then setBrightness(0) end --dim screen only on pro
 if(bonus_unit_menu) then use_bonus_unit = true end
 if(battle_mode == 2) then use_esper_battle = true end
+if(comp_mode == 2) then use_bonus_unit = true end
+if(comp_mode == 3) then use_highest_atk_companion = true end
 
 if(farmloc == "dungeon_finder") then selectDungeon() -- get custom dungeon location
 elseif(farmloc == "free_farm") then freeFarm() end 
 
 if (max_depart_count == 99999) then toast("Infinite Depart") end
 
+if (height >= width) then aRatio = (height / width) / 1.6					-- Aspect ratio correction from 960 height 600 width which is 1.6 ratio
+else aRatio = (width / height) / 1.6
+end
+
 while true do
 	depart_count = depart_count + 1
+	setStopMessage("Task : "..farmloc.."\n\nDepart : "..depart_count.."\nGame Over : "..gameover_count.."\nLapis Refill : "..lapis_refill_count)
 	if (debug_mode) then runlog("Depart #"..depart_count, true) end
 	fFarm(farmloc)
 	if (max_depart_count ~= 99999 and depart_count >= max_depart_count) then scriptExit("Finished") end
