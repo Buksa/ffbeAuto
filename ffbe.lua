@@ -4,20 +4,18 @@
 -- Nox
 -- http://ankulua.boards.net/thread/167/brave-exvius-ffbeauto-farming-explorations
 
-ver = "ffbeAuto Z11 - AnkuLua ver "..getVersion()
-ALver = 0
-ALpro = true
+ver = "ffbeAuto Z12 BETA 1"
+ALver = "0"															-- AnkuLua version string
+ALpro = true														-- is this AnkuLua a Pro and not trial?
 
 Settings:setCompareDimension(true, 600)
 Settings:setScriptDimension(true, 600)
 setImmersiveMode(true)
 
 exploration = Pattern("exploration.png"):similar(0.5)
-control = Pattern("control.png")
 autobtn = Pattern("auto.png"):similar(0.9)
-autobtn_reg = nil
 autoonbtn = Pattern("AutoOn.png"):similar(0.8)
-repeatbtn = Pattern("SB_Repeat.png"):similar(0.9)
+repeatbtn = Pattern("SB_Repeat.png"):similar(0.7)
 nextbtn = Pattern("next.png")
 nextbtn2 = Pattern("next2.png")
 next_mission = Pattern("next_missioncomplete.png")
@@ -38,7 +36,6 @@ explore_continue = Pattern("explore_continue.png")
 explore_leave = Pattern("explore_leave.png")
 locked_chest = Pattern("locked_chest.png")
 results = Pattern("results.png")
-lapis_results = Pattern("lapis_results.png")
 results_big = Pattern("results_big.png")
 questclear = Pattern("questclear.png")
 menu = Pattern("menu.png")
@@ -61,8 +58,25 @@ friend = Pattern("friend.png"):similar(0.7)
 insufficient_raid_orbs = Pattern("insufficient_raid_orbs.png"):similar(0.75)
 raid_orbs_no = Pattern("raid_orbs_no.png"):similar(0.7)
 revive = Pattern("lapis_revive.png"):similar(0.7)
+giveup = Pattern("giveupnow.png")
+esperfilled = Pattern("SB_EsperFilled.png"):similar(0.7)
+IsReady = Pattern("SB_MyTurn.png"):similar(0.7)
+BackButton = Pattern("backbutton.png"):similar(0.8)
+boss = Pattern("bossbattle.png"):similar(0.7)
 
-buttonreg = { }
+buttonreg = { }									-- universal table for button regions learning
+
+-- Manually set regions
+buttonreg[results_big] = Region(120,30,360,320) -- two locations for results big
+buttonreg[revive] = Region(50,80,495,435)
+buttonreg[giveup] = Region(50,80,495,435)
+buttonreg[closebtn] = Region(10,225,580,550)
+buttonreg[connection_error] = Region(30,340,545,320)
+buttonreg[connect_ok] = Region(30,340,545,320)
+buttonreg[no_request] = Region(5,635,290,165)
+buttonreg[esperfilled] = Region(540,440,60,180)
+buttonreg[yesbtn] = Region(5,80,590,760)		-- yesbtn is used in multiple locations
+
 findMoveReg = nil
 findMoveSet = false
 findMoveX = 999999
@@ -70,45 +84,43 @@ findMoveY = 999999
 findMoveX2 = 0
 findMoveY2 = 0
 friendsreg = nil
-friendsATKreg = nil
 friendsBONUSreg = nil
 
-lagx = 1.0
-lagc = 1.0
+lagx = 1.0										-- Device lag multiplier value. 1.0 for high end devices.
 help_screen = false
 use_bonus_unit = false
 use_highest_atk_companion = false
 use_esper_battle = false
+use_smart_battle = false
+use_smart_battle_2nd = true
+use_smart_battle_2nd_round = 3
+use_smart_battle_boss = true
+use_smart_battle_boss_2nd = true
 continue_on_gameover = true
---always_findmove = false
-goldcheck_success = false
-leave_after_boss = false
-finished_explore = false
-depart_count = 0
+goldcheck_success = false						-- Has gold check ever successful?
+leave_after_boss = false						-- Exploration value - leave after boss instead of continuing.
+finished_explore = false						-- Used in conjunction of leave after boss to break all exploration functions.
+depart_count = 0								-- Count for departing.
 max_depart_count = 99999
 gameover_count = 0
 lapis_refill_count = 0
---colosseumTimer = Timer() -- set timer for colosseum schedule
-alt_step=true
-gold_reg = nil
-tempbtn = nil
-battle_counter = 0
-move_counter = 0
-enable_bosscheck_counter = 20					-- when to enable bosscheck on explorations, will be adjusted automatically after a successful run
-bosses_encountered = 0
+alt_step=true									-- Deprecated. Always true now. If false will replace single steps with 100ms swipes.
+gold_reg = nil									-- Region for gold check in exploration farming
+tempbtn = nil									-- Temporary button storage
+battle_counter = 0								-- Battle counter in explorations including farming.
+move_counter = 0								-- Total move counter in explorations not including farming.
+enable_bosscheck_counter = 20					-- When to enable bosscheck on explorations, will be adjusted automatically after a successful run
+bosses_encountered = 0							-- When, if, there are explorations with multiple bosses.
 screen = getAppUsableScreenSize()
 width = screen:getX(); height = screen:getY()
 left_reg = Region(0,0,300,1200)
 right_reg = Region(300,0,600,1200)
 top_reg = Region(0,0,600,480)
 bottom_reg = Region(0,480,600,600)
-control_reg = Region(0,900,600,300)
-SB_reg = Region(0,550,600,520)
-debug_reg = Region(40,0,495,35)
---mid_reg = Region(width/4,height/4,width/2,height/2)
+control_reg = Region(0,550,600,520)
+debug_reg = Region(40,0,495,35)					-- region to which the script writes debug texts.
 r_x = width/4; r_y = height/4; r_w = width/2; r_h = height/2
 mid_reg = Region(r_x,r_y,r_w,r_h)
---mid_reg = Region(150,240,300,480)
 center = Location(300,480)
 diff = width/2.5
 up = {center:offset(0,-(height/3))}
@@ -127,12 +139,44 @@ bottom = Location(300,750)
 rain = {Pattern("rain_up.png"):similar(0.9),Pattern("rain_down.png"):similar(0.9),Pattern("rain_left.png"):similar(0.9),Pattern("rain_right.png"):similar(0.9),
 		Pattern("rain_ul.png"):similar(0.9),Pattern("rain_ur.png"):similar(0.9),Pattern("rain_dl.png"):similar(0.9),Pattern("rain_dr.png"):similar(0.9)}
 
-worldmap = {}
-worldmap["maranda_coast"] = Pattern("wm_maranda_coast.png")
-worldmap["dwarves_forge"] = Pattern("wm_dwarves_forge.png")
-worldmap["earth_shrine"] = Pattern("wm_earth_shrine.png")
-worldmap["fulan_pass"] = Pattern("wm_fulan_pass.png")
-worldmap["phantom_forest"] = Pattern("wm_phantom_forest.png")
+sb_skills = {}
+sb_skills["None"] = false
+sb_skills["Katana"] = Pattern("SB_Sword.png")
+sb_skills["Sword"] = Pattern("SB_Break.png")
+sb_skills["Blast"] = Pattern("SB_Blast.png")
+sb_skills["Aero"] = Pattern("SB_Aero.png")
+sb_skills["Shot"] = Pattern("SB_Shot.png")
+sb_skills["Cure"] = Pattern("SB_Curaja.png")
+sb_skills["Fire"] = Pattern("SB_Fire.png")
+sb_skills["Blizzard"] = Pattern("SB_Blizzard.png")
+sb_skills["Thunder"] = Pattern("SB_Thunder.png")
+sb_skills["Holy"] = Pattern("SB_Holy.png")
+sb_skills["Dark"] = Pattern("SB_Dark.png")
+sb_skills["Drain"] = Pattern("SB_Drain.png")
+sb_skills["Stone"] = Pattern("SB_Stone.png")
+sb_skills["Water"] = Pattern("SB_Water.png")
+sb_skills["Poison"] = Pattern("SB_Poison.png")
+sb_skills["Buff"] = Pattern("SB_Buff.png")
+sb_skills["Steal"] = Pattern("SB_Steal.png")
+sb_skills["Kick"] = Pattern("SB_Kick.png")
+sb_skills["Cover (Noctis)"] = Pattern("SB_Cover.png")
+
+sb_skilluse = {}										-- Skill to use
+sb_skillmp = {}											-- MP match
+sb_skilluse2 = {}										-- Skill to use
+sb_skillmp2 = {}										-- MP match
+sb_skilluse_boss = {}									-- Skill to use on boss
+sb_skillmp_boss = {}									-- MP match on boss
+sb_skilluse_boss2 = {}									-- Skill to use on boss
+sb_skillmp_boss2 = {}									-- MP match on boss
+sb_regunit = {}											-- unit 1 to 6 specific regions
+sb_reg = nil											-- Region for the entire controls
+
+special_farm = {}
+special_farm["dungeon_finder"] = Location(0,0)
+special_farm["free_farm"] = exploration
+		
+-- List of dungeons other than special functions
 
 farm = {}
 farm["earth_shrine_entrance"] = Pattern("earth_shrine_entrance.png")
@@ -143,15 +187,15 @@ farm["fulan_pass_exploration"] = Pattern("fulan_pass_exploration.png")
 farm["maranda_coast_exploration"] = Pattern("maranda_coast_exploration.png")
 farm["wolfsfang_peak_exploration"] = Pattern("wolfsfang_peak_exploration.png")
 farm["dwarves_forge_exploration"] = Pattern("dwarves_forge_exploration.png")
-farm["dalnakya_cavern_harvest_exploration"] = Pattern("dalnakya_cavern_harvest.png")
+--farm["dalnakya_cavern_harvest_exploration"] = Pattern("dalnakya_cavern_harvest.png")
 farm["water_shrine_exploration"] = Pattern("water_shrine_exploration.png")
 farm["wind_shrine_exploration"] = Pattern("wind_shrine_exploration.png")
 farm["fire_shrine_exploration"] = Pattern("fire_shrine_exploration.png")
 farm["invincible_interior_exploration"] = Pattern("invincible_interior_exploration.png")
-farm["dungeon_finder"] = Location(0,0)
 farm["enchanted_maze"] = exploration
-farm["orbonne_monastery_vault_exploration"] = Pattern("vault_explore.png")
-farm["free_farm"] = exploration
+--farm["orbonne_monastery_vault_exploration"] = Pattern("vault_explore.png")
+
+-- Exploration paths.
 
 custom = {} -- for custom path name
 explorePath = {}
@@ -230,17 +274,34 @@ function getPath(str,pathIndex)
 	return output
 end
 
+function pairsByKeys (t, f)
+	local a = {}
+    for n in pairs(t) do table.insert(a, n) end
+    table.sort(a, f)
+    local i = 0      -- iterator variable
+
+    local iter = function ()   -- iterator function
+      i = i + 1
+      if a[i] == nil then return nil
+      else return a[i], t[a[i]]
+      end
+    end
+
+    return iter
+    end
+
 function getALVer()
 	local ALstring = getVersion()
---	local version = 0
 	local pro = false
---	local output = {}
 
 	if string.match(ALstring, "pro") then pro = true end
 
 	local temp = ALstring:split("-")
 	return temp[1],pro
 end
+
+-- existsClick function with self-learning capabilities. Will store button regions for faster searching next time.
+-- Warning : USE ONLY with buttons that are always located in one location. Otherwise use the standard function or define region manually first.
 
 function existsClickL(obj, howLong)
 	
@@ -275,10 +336,13 @@ function existsClickL(obj, howLong)
 	return returnval
 end
 
+-- exists function with self-learning capabilities. Will store button regions for faster searching next time.
+-- Warning : USE ONLY with buttons that are always located in one location. Otherwise use the standard function or define region manually first.
+
 function existsL(obj, howLong)
 	
 	local returnval = false
-	local safetyMargin = 5
+	local safetyMargin = 15
 	local tX = 0
 	local tY = 0
 	local tW = 0
@@ -319,13 +383,13 @@ if( f ~= nil) then
 	end
 end
 
+--Find Rain's position on explorations. Returns false if fails to find any.
+
 function findMove()
 	local center = nil
---	toast("Finding Rain's position...")
 	usePreviousSnap(false)
 
 	for i=1,#rain do 
---		if(debug_mode) then toast("Hightlighting Rain region"); mid_reg:save("rain_reg.png"); mid_reg:highlight(1); runlog("Checking Rain#"..i) end
 		if(findMoveSet == false and exists(rain[i],0)) then 
 
 			if (getLastMatch():getX() < findMoveX) then
@@ -345,10 +409,6 @@ function findMove()
 --				if (debug_mode) then runlog("Rain Y2 :"..findMoveY2, true) end
 			end
 
---			if (debug_mode) then
---				findMoveReg = Region(findMoveX, findMoveY, findMoveX2-findMoveX, findMoveY2-findMoveY)
---				findMoveReg:highlight(0.35)
---			end
 			
 			center = getLastMatch()
 --			if(debug_mode) then runlog("Found Rain#"..i) end
@@ -387,7 +447,6 @@ function findMove()
 	usePreviousSnap(false)
 
 	if(center == nil) then 
---		toast("Can't find Rain, turning off Step by click mode"); alt_step=false 
 		if(debug_mode) then runlog("Rain not found",true) end
 		return false
 	end
@@ -396,7 +455,8 @@ end
 
 function selectDungeon()
 	toast("Finding available dungeon...")
-	dungeonList = findAllNoFindException(dungeon)
+	dungeonList = regionFindAllNoFindException(left_reg,dungeon)
+--	dungeonList = findAllNoFindException(dungeon)
 	if(debug_mode) then runlog("Custom dungeon found: "..#dungeonList,true) end
 	dialogInit()
 	addRadioGroup("custom_dungeon",1)
@@ -407,6 +467,8 @@ function selectDungeon()
 	farm["dungeon_finder"] = dungeonList[custom_dungeon]
 	if(debug_mode) then runlog("Custom dungeon select: "..custom_dungeon,true) end
 end
+
+-- Random exploration mode only executed when pathing fails. Better than just staying there doing nothing.
 
 function chaosExploraton()
 	local count = 0
@@ -422,7 +484,7 @@ function chaosExploraton()
 	
 	while(true) do
 		if (finished_explore == true) then break end
-		if (exists(revive,0)) then break end
+		if (existsL(revive,0)) then break end
 		count = count + 1
 		random_1 = math.random(12)
 		random_2 = math.random(450+(lagx*100),7250+(lagx*250))
@@ -449,6 +511,8 @@ function chaosExploraton()
 	end
 end
 
+-- Old findBattle function, preserved for compatibility.
+
 function findBattle(loot_direction,limit,exit_direction)
 
 	-- store optimization variables
@@ -461,7 +525,7 @@ function findBattle(loot_direction,limit,exit_direction)
 	enable_bosscheck_counter = 100000
 		
 	for i=0, 100 do 
-		if(exists(revive,0)) then return end
+		if(existsL(revive,0)) then return end
 		toast("Lap "..i)
 		local count = battle_counter
 		if(loot_direction == "lr") then
@@ -491,6 +555,8 @@ function findBattle(loot_direction,limit,exit_direction)
 	
 end
 
+-- New findbattle function.
+
 function findBattleEx(loot_direction,limit,battle_limit,run_length,exit_direction)
 
 	-- store optimization variables
@@ -501,12 +567,9 @@ function findBattleEx(loot_direction,limit,battle_limit,run_length,exit_directio
 
 	-- no bosscheck
 	enable_bosscheck_counter = 100000
-	
-	-- reduce lagx
---	lagx = lagx / 5
-	
+		
 	for i=0, 100 do 
-		if(exists(revive,0)) then return end
+		if(existsL(revive,0)) then return end
 		toast("Lap "..i)
 		local count = battle_counter
 		if(loot_direction == "lr") then
@@ -530,15 +593,14 @@ function findBattleEx(loot_direction,limit,battle_limit,run_length,exit_directio
 
 	toast("Exiting farming...")
 	go(exit_direction,run_length)
-	
-	-- restore lagx
---	lagx = lagx * 5
-	
+		
 	-- restore optimization variables
 	enable_bosscheck_counter = lastEnableBossCheck
 	move_counter = lastMoveCounter
 	
 end
+
+-- Gold check function for exploration farming.
 
 function checkGold(limit)
 	local gold
@@ -547,7 +609,7 @@ function checkGold(limit)
 	usePreviousSnap(false)
 
 	for i=1,20 do
-		existsClickL(menu,lagx/3)
+		existsClickL(menu,lagx/4)
 		wait(lagx/8+0.1)
 		if(existsL(gold_coin,lagx/4)) then
 
@@ -557,7 +619,7 @@ function checkGold(limit)
 				gold_reg = Region(getLastMatch():getX()+40,getLastMatch():getY()+1,135,41*aRatio)
 				if(debug_mode) then gold_reg:save("gold_reg.png") end
 			else
-				gold_reg:highlight(0.25)
+				if(debug_mode) then gold_reg:highlight(0.25) end
 				gold, returnval = numberOCRNoFindException(gold_reg,"gil")
 				if (returnval) then
 					existsClickL(menu_back,2)
@@ -587,49 +649,51 @@ function checkGold(limit)
 	return 1000000 -- can't check, better quit
 end
 
+-- Handles all result screen shenanigans, including Game Over, Dailies, Rank ups, Companion request buttons.
+
 function resultsExit()
-	local giveup = Pattern("giveupnow.png")
-	local numfunc = 14
-	local e_nextbtn = false
-	local e_nextbtn2 = false
-	local e_nextmission = false
+	local numfunc = 6
 
 	if(debug_mode) then runlog("Results exit start",true) end
 
-	while true do
+	-- Handle all the connection stuff and gameovers first.
+	for i=0, 3000000 do
 		usePreviousSnap(false)
-		if(top_reg:exists(results_big,0)) then click(getLastMatch()) ; break end		
+		if(existsClickL(results_big,0)) then break end		
 		usePreviousSnap(true)
-		connectionCheckNoWait()
-		if(existsL(backbtn,0)) then break end		
-		if(existsL(lapis,0)) then break end
-		if(existsL(lapis_results,0)) then break end
-		if(existsL(revive,0)) then gameOver(); break end
-		if(existsL(giveup,0)) then gameOver(); break end
+		if (i%5 == 0) then
+			connectionCheckNoWait()
+		elseif (i%5 == 1) then
+			if(existsL(backbtn,0)) then break end		
+		elseif (i%5 == 2) then
+			if(existsL(lapis,0)) then break end
+		elseif (i%5 == 3) then
+			if(existsL(revive,0)) then gameOver(); break end
+		elseif (i%5 == 4) then
+			if(existsL(giveup,0)) then gameOver(); break end
+		end
 	end
 
+	-- Then do the clicking
+	
 	for i=0, 3000000 do
 		usePreviousSnap(false)
 		if(existsL(backbtn,0)) then break end
 		usePreviousSnap(true)
-		top_reg:existsClick(results_big,0)
+		existsClickL(results_big,0)
 		
-		if ((i%numfunc == 0 or i%numfunc == 8 or i%numfunc == 11) and (existsClickL(nextbtn,0)) and debug_mode) then
+		if ((existsClickL(nextbtn,0)) and debug_mode) then
 			runlog("Next 1")
-		elseif ((i%numfunc == 2 or i%numfunc == 9 or i%numfunc == 12) and (existsClickL(nextbtn2,0)) and debug_mode) then
+		elseif ((existsClickL(nextbtn2,0)) and debug_mode) then
 			runlog("Next 2")
-		elseif ((i%numfunc == 4 or i%numfunc == 10 or i%numfunc == 13) and (existsClickL(next_mission,0)) and debug_mode) then
+		elseif ((existsClickL(next_mission,0)) and debug_mode) then
 			runlog("Next 3")
 		elseif (i%numfunc == 1 and existsClickL(rank_up,0) and debug_mode) then
 			runlog("Rank Up")
-		elseif (i%numfunc == 3 and existsClick(closebtn,0) and debug_mode) then
+		elseif (i%numfunc == 3 and existsClickL(closebtn,0) and debug_mode) then
 			runlog("Close Button")
 		elseif (i%numfunc == 5 and existsClickL(no_request,0) and debug_mode) then
 			runlog("No Request")
-		elseif (i%numfunc == 6) then
-			gameOverNoWait()
-		elseif (i%numfunc == 7) then
-			connectionCheckNoWait()
 		end
 
 	end
@@ -643,9 +707,9 @@ function resultsExit()
 	end
 end
 
+-- Handles battle scenes in explorations
+
 function exploreBattle()
-	local esperfilled = Pattern("SB_EsperFilled.png"):similar(0.7)
-	local IsReady = Pattern("SB_MyTurn.png"):similar(0.7)
 	--boss = (boss or false)
 	local auto_pressed = 0
 	local findUnit = nil
@@ -664,10 +728,9 @@ function exploreBattle()
 
 	if(debug_mode) then runlog("Explore battle start",true) end
 	for i=0,300000 do
-		if(existsL(results,0)) then
-			click(getLastMatch())
+		if(existsClickL(results,0)) then
 			if(debug_mode) then runlog("Result screen") end
-		elseif (use_esper_battle and right_reg:exists(esperfilled,0)) then
+		elseif (use_esper_battle and existsL(esperfilled,0)) then
 			if (debug_mode) then getLastMatch():highlight(0.2); runlog("Esper Ready : ") end
 			if (not existsClickL(autoonbtn,0)) then
 				if (bottom_reg:exists(IsReady,lagx/3)) then
@@ -678,12 +741,8 @@ function exploreBattle()
 						wait(0.15+lagx/4)
 						if (battleChoice("esper")) then break end
 					end
-
---					if (debug_mode) then getLastMatch():highlight(0.2) ; runlog("Selecting Esper...", true) end
---					dragDrop(Location(getLastMatch():getX()+10,getLastMatch():getY()+30),Location(getLastMatch():getX()+250,getLastMatch():getY()+30))
---					wait(0.1+math.max(0,(lagx-0.5)/3))
---					battleChoice("esper")
-					existsClick(autobtn,lagx/5+0.1)
+					
+					existsClickL(autobtn,lagx/5+0.1)
 				end
 			end
 			auto_pressed = 0
@@ -726,19 +785,19 @@ function exploreLeave()
 
 	if(debug_mode) then runlog("Attempting to leave",true) end
 
-	if(exists(revive,0)) then return end
+	if(existsL(revive,0)) then return end
 
 	for i=0,900000 do
 		click(center)
 		usePreviousSnap(false)
-		existsClick(explore_leave,0)
+		existsClickL(explore_leave,0)
 		usePreviousSnap(true)
-		existsClick(explore_yes,0)
-		if(top_reg:exists(results_big,0)) then click(getLastMatch()); break end
-		if(exists(dungeon_clear,0)) then break end
+		existsClickL(explore_yes,0)
+		if(existsL(results_big,0)) then break end
+		if(existsL(dungeon_clear,0)) then break end
 		if(i%49 == 0 and i > 0 and findMove()) then rain_found = rain_found + 1 end
 		if(rain_found > 5) then toast("Leave failed!") ; break end
-		connectionCheck()
+		connectionCheckNoWait()
 	end
 	
 	if (rain_found > 5) then
@@ -754,12 +813,17 @@ function bossBattle()
 	if(debug_mode) then runlog("Boss battle after move : "..move_counter,true) end
 	for i=0,200000 do
 		click(center)
---		wait(3)
 		usePreviousSnap(false)
-		existsClick(explore_yes,0)
+		existsClickL(explore_yes,0)
 		usePreviousSnap(true)
-		if(control_reg:exists(menuinbattle,0)) then exploreBattle(); break end
-		if(exists(revive,0)) then return end
+		if(existsL(menuinbattle,0)) then 
+			if (use_smart_battle) then
+				smartBattle() ; break
+			else
+				exploreBattle(); break
+			end 
+		end
+		if(existsL(revive,0)) then return end
 	end
 
 	usePreviousSnap(false)
@@ -769,18 +833,18 @@ function bossBattle()
 	bosses_encountered = bosses_encountered + 1
 
 	for i=0,30000 do
-		if(exists(revive,0)) then return end
+		if(existsL(revive,0)) then return end
 --		usePreviousSnap(false)
-		existsClick(battle_won,0)
+		existsClickL(battle_won,0)
 --		usePreviousSnap(true)
-		existsClick(battle_won2,0)
+		existsClickL(battle_won2,0)
 		if (leave_after_boss) then
 			finished_explore = true
-			existsClick(explore_leave,0)
+			existsClickL(explore_leave,0)
 			break
-		elseif(existsClick(explore_continue,0)) then break end
-		if(bottom_reg:exists(menu,0)) then break end
-		if(exists(revive,0)) then return end
+		elseif(existsClickL(explore_continue,0)) then break end
+		if(existsL(menu,0)) then break end
+		if(existsL(revive,0)) then return end
 	end
 
 	usePreviousSnap(false)
@@ -790,9 +854,9 @@ end
 function finishExplore()
 
 
-	if(exists(revive,0)) then return end
+	if(existsL(revive,0)) then return end
 
-	if(not finished_explore and top_reg:exists(sense_hostile)) then 
+	if(not finished_explore and existsL(sense_hostile)) then 
 		if(debug_mode) then runlog("Boss found") end
 		bossBattle()
 	else exploreLeave() end
@@ -807,9 +871,9 @@ end
 
 function connectionCheck()
 --	if(debug_mode) then runlog("Connection check",true) end
-	if(exists(connection_error, lagx/4)) then 
+	if(existsL(connection_error, lagx/4)) then 
 		if(debug_mode) then runlog("Connection error") end
-		if(existsClick(connect_ok, lagx/4) and debug_mode) then runlog("Connect attempt") end
+		if(existsClickL(connect_ok, lagx/4) and debug_mode) then runlog("Connect attempt") end
 	end
 end
 
@@ -852,13 +916,13 @@ function enchantedMaze()
 	local lvexit = Pattern("enchanted_maze_exit.png")
 	
 	go("up",4000)
-	if(exists(lv1)) then
+	if(existsL(lv1)) then
 		go("up",4000)
 	end
-	if(exists(lv2)) then 
+	if(existsL(lv2)) then 
 		go("up",4000) 
 	end
-	if(exists(lv3)) then 
+	if(existsL(lv3)) then 
 		findMove()
 		go("up",1)
 		findMove()
@@ -867,7 +931,7 @@ function enchantedMaze()
 		go("left",3)
 		go("up",4000)
 	end
-	if(exists(lv4)) then
+	if(existsL(lv4)) then
 		findMove()
 		go("up",1)
 		findMove()
@@ -876,15 +940,18 @@ function enchantedMaze()
 		go("right",3)
 		go("up",1000)
 	end
-	if(exists(lv5)) then
+	if(existsL(lv5)) then
 		go("up",1000)
 		go("left",2000)
 		go("up",2000)
 	end
-	if(exists(lvexit)) then
+	if(existsL(lvexit)) then
 		go("up",2000)
 	end
 end
+
+-- Main function for everything dungeons, explorations, vortexes, and raids.
+-- Always assume start from mission selection screen.
 
 function fFarm(location)
 	local tempi = 0
@@ -903,17 +970,16 @@ function fFarm(location)
 			wait(0.1+lagx/10)
 			
 			usePreviousSnap(false)
-			if (exists(lapis,0)) then
+			if (existsL(lapis,0)) then
 				usePreviousSnap(true)
 			end
 
-			--if(colosseumsched and colosseumTimer:check()>7200) then colosseumBattle() end
 			if(string.match(location,"custom_")) then 
 				if(existsClickL(exploration,0) and debug_mode) then runlog("Custom Exploration",true) end
 				tempbtn = getLastMatch()
 			elseif(location=="dungeon_finder") then
 				--toast("Custom dungeon")
-				if (exists(dungeon,0)) then
+				if (left_reg:exists(dungeon,0)) then
 					click(farm[location])
 					tempbtn = farm[location]
 					if(debug_mode) then runlog("Dungeon Finder",true) end
@@ -923,25 +989,19 @@ function fFarm(location)
 				if(existsClickL((farm[location]),0) and debug_mode) then runlog("Selected",true) end
 				tempbtn = getLastMatch()
 			end
-			
-			--toast(location.."  "..getLastMatch():getScore())
---			wait(0.1+lagx*0.1)
-		
+					
 			--out of raid orbs handler
 			if(func_state == 11 or existsL(insufficient_raid_orbs,0)) then 
 				func_state = 11
 				if(debug_mode) then runlog("Out of raid orbs") end
 				if(refill) then 
 					toast("Burning lapis..."); if(debug_mode) then runlog("Refill lapis") end
-					existsClick(refill_lapis,0)
-					if (existsClick(yesbtn,0)) then wait(lagx) ; func_state = 0 ; lapis_refill_count = lapis_refill_count + 1 end
-				elseif(existsClick(raid_orbs_no,0)) then
+					existsClickL(refill_lapis,0)
+					if (existsClickL(yesbtn,0)) then wait(lagx*0.3) ; func_state = 0 ; lapis_refill_count = lapis_refill_count + 1 end
+				elseif(existsClickL(raid_orbs_no,0)) then
 					func_state = 0
 					math.randomseed(os.time()); toast(waitmsg[math.random(#waitmsg)].. " now... Come back way later."); wait(90+lagx*3*math.random(1,4)*math.random(1,30))
 				end
-	--			if(location=="dungeon_finder") then click(farm[location])
-	--			else existsClick((farm[location])) end
-	--			wait(0.75+lagx*0.15)
 			end
 
 			--out of energy handler
@@ -950,15 +1010,12 @@ function fFarm(location)
 				if(debug_mode) then runlog("Out of energy") end
 				if(refill) then 
 					toast("Burning lapis..."); if(debug_mode) then runlog("Refill lapis") end
-					existsClick(refill_lapis,0); 
-					if (existsClick(yesbtn,0)) then wait(lagx) ; func_state = 0  ; lapis_refill_count = lapis_refill_count + 1 end
-				elseif (bottom_reg:existsClick(backbtn,0)) then 
+					existsClickL(refill_lapis,0); 
+					if (existsClickL(yesbtn,0)) then wait(lagx*0.3) ; func_state = 0  ; lapis_refill_count = lapis_refill_count + 1 end
+				elseif (bottom_reg:existsClick(backbtn,0)) then -- DIFFERENT POSITION than the usual top left. Do NOT use learning.
 					func_state = 0
 					math.randomseed(os.time()); toast(waitmsg[math.random(#waitmsg)].. " now... Come back later."); wait(35+lagx*math.random(1,35))
 				end
-	--			if(location=="dungeon_finder") then click(farm[location])
-	--			else existsClick((farm[location])) end
-	--			wait(0.75+lagx*0.15)
 			end
 
 			-- next button
@@ -967,7 +1024,7 @@ function fFarm(location)
 			end
 		
 			-- companion handler
-			if(func_state == 21 or exists(companion,0)) then				
+			if(func_state == 21 or exists(companion,0)) then				 -- DO NOT LEARN BUTTON LOC with this, as it may learn the button when it is still flying!
 				if (func_state ~= 21) then
 					func_state = 21
 					if ((use_bonus_unit == true and friendsBONUSreg == nil) and (friendsreg == nil)) then
@@ -975,13 +1032,13 @@ function fFarm(location)
 					else
 						wait(0.1)
 					end
-				elseif use_bonus_unit == true and friendsBONUSreg == nil and exists(bonus_unit,0) then
+				elseif use_bonus_unit == true and friendsBONUSreg == nil and left_reg:exists(bonus_unit,lagx*0.5) then			-- BONUS! image pulses, soooo needs time.
 					tempbtn = getLastMatch()
 					friendsBONUSreg = Region(getLastMatch():getX()-15,80,getLastMatch():getW()+30,height-60)
 					if(debug_mode) then friendsBONUSreg:highlight(0.35) ; runlog("Companion : Bonus", true) end
 					click(tempbtn)
 					func_state = 0
-				elseif use_bonus_unit == true and friendsBONUSreg:exists(bonus_unit,0) then
+				elseif use_bonus_unit == true and not friendsBONUSreg == nil and friendsBONUSreg:exists(bonus_unit,lagx*0.5) then								-- BONUS! image pulses, soooo needs time.
 					tempbtn = friendsBONUSreg:getLastMatch()
 					if(debug_mode) then getLastMatch():highlight(0.15) ; runlog("Companion : Bonus", true) end
 					click(tempbtn)
@@ -1044,7 +1101,7 @@ function fFarm(location)
 			end
 			
 			-- depart handler
-			if(func_state == 31 or bottom_reg:exists(departbtn,0)) then
+			if(func_state == 31 or bottom_reg:exists(departbtn,0)) then     -- DO NOT LEARN BUTTON LOC with this, as it may learn the button when it is still flying!
 				if (func_state ~= 31) then
 					func_state = 31
 					if (buttonreg[departbtn] == nil) then
@@ -1059,21 +1116,17 @@ function fFarm(location)
 				end
 			end
 			
---			if (exists(connection_error,0)) then 
---				if(debug_mode) then runlog("\tconnection error.") end
---				if(existsClick(connect_ok, lagx/2) and debug_mode) then runlog("\tconnect_ok") end
---			end
 		else	-- departed is true
 
 			usePreviousSnap(false)
-			if (exists(lapis,0)) then
+			if (existsL(lapis,0)) then
 				usePreviousSnap(true)
 			end
-
+				-- handle the unit data changed error
 			if existsL(unitdatachanged,0) then
 				if(debug_mode) then runlog("Depart failed - unit data changed") 	end
 				departed = false
-				existsClick(connect_ok, 0)
+				existsClickL(connect_ok, 0)
 				wait (0.5+lagx/3)
 			elseif (existsL(connection_error,0)) then 
 				if(debug_mode) then runlog("Connection Error") end
@@ -1086,10 +1139,7 @@ function fFarm(location)
 		end
 	end
 
-	--toast("depart "..getLastMatch():getScore())
---	wait(0.25+0.25*lagx+0.5*lagc)
-
-	--moved waiting for connection here
+	--waiting for connection here
 	while(true) do
 		usePreviousSnap(false)
 		if(existsL(menuinbattle,lagx/3)) then break end
@@ -1100,13 +1150,15 @@ function fFarm(location)
 	
 	if(string.match(location,"_exploration") or string.match(location,"custom_")) then explore2(location)
 	elseif(location=="enchanted_maze") then enchantedMaze()
-	elseif(location=="earth_shrine_exit") then esLBFarm()
+	elseif(use_smart_battle==true) then smartBattle()
 	elseif(use_esper_battle==true) then battleEsper()
 	else
 		battleAuto()
 	end
 	resultsExit() -- handle results screen
 end
+
+-- Go x ms or steps in what direction function for explorations.
 
 function go(loc,steps)
 	steps = steps or 1
@@ -1116,7 +1168,7 @@ function go(loc,steps)
 			if(debug_mode) then runlog("Going "..loc.." "..(steps/100).." steps",true) end
 			for i=1,steps/100 do --convert to single steps
 				if (not findMove() and not (existsL(menu,0))) then break
-				elseif(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0)) then break end
+				elseif(move_counter >= enable_bosscheck_counter and existsL(sense_hostile,0)) then break end
 				click((_G[loc])[2])
 				wait(0.1+math.max(0,(lagx-1)/3))
 			end
@@ -1124,7 +1176,7 @@ function go(loc,steps)
 --			wait(0.25+lagx/2)
 			if((not findMove()) and not (existsL(menu,0))) then 
 				exploreBattle()
-				if(exists(revive,0)) then return end
+				if(existsL(revive,0)) then return end
 				if (move_counter >= enable_bosscheck_counter) then
 					move_counter = move_counter - 1
 					go(loc,steps)
@@ -1132,12 +1184,12 @@ function go(loc,steps)
 					move_counter = move_counter - 1
 					go(loc,steps-math.max(0,i-3))
 				end
-			elseif(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
+			elseif(move_counter >= enable_bosscheck_counter and existsL(sense_hostile,0.4+lagx/2)) then bossBattle()
 			else
 				go(loc,steps-math.max(0,i-2))
 			end
 		else
-			if (not findMove() and not (bottom_reg:exists(menu,0))) then exploreBattle() end
+			if (not findMove() and not (existsL(menu,0))) then exploreBattle() end
 			for i=1,steps do
 				if(debug_mode) then runlog("Step #"..i.." of "..steps,true) end
 				if(alt_step) then click((_G[loc])[2]) ; wait(0.1)
@@ -1146,8 +1198,8 @@ function go(loc,steps)
 					dragDrop(center,(_G[loc])[1])
 				end
 				wait(0.1+math.max(0,(lagx-1)/3))
-				if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
-				elseif(not findMove() and not (existsL(menu,0))) then exploreBattle() ; if(exists(revive,0)) then return end end
+				if(move_counter >= enable_bosscheck_counter and existsL(sense_hostile,0.4+lagx/2)) then bossBattle()
+				elseif(not findMove() and not (existsL(menu,0))) then exploreBattle() ; if(existsL(revive,0)) then return end end
 			end
 		end
 	else -- swiping
@@ -1157,10 +1209,10 @@ function go(loc,steps)
 			if(debug_mode) then runlog("Going "..loc.." "..steps.."ms",true) end
 			dragDrop(center,_G[loc][1])
 			wait(0.1+math.max(0,(lagx-1)/5))
-			if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.4+lagx/2)) then bossBattle()
-			elseif(not findMove() and not (existsL(menu,0))) then exploreBattle() ; if(exists(revive,0)) then return end ; move_counter = move_counter - 1 ; go(loc,steps) end
+			if(move_counter >= enable_bosscheck_counter and existsL(sense_hostile,0.4+lagx/2)) then bossBattle()
+			elseif(not findMove() and not (existsL(menu,0))) then exploreBattle() ; if(existsL(revive,0)) then return end ; move_counter = move_counter - 1 ; go(loc,steps) end
 		else
-			if (not findMove() and not (existsL(menu,0))) then exploreBattle() ; if(exists(revive,0)) then return end end
+			if (not findMove() and not (existsL(menu,0))) then exploreBattle() ; if(existsL(revive,0)) then return end end
 			for i=1,steps do -- single step click
 				if(debug_mode) then runlog("Step #"..i.." of "..steps,true) end
 				if(alt_step) then click((_G[loc])[2]) ; wait(0.1)
@@ -1169,79 +1221,25 @@ function go(loc,steps)
 					dragDrop(center,(_G[loc])[1])
 				end
 				wait(0.1+math.max(0,(lagx-1)/3))
-				if(move_counter >= enable_bosscheck_counter and top_reg:exists(sense_hostile,0.3+lagx/2)) then bossBattle()
+				if(move_counter >= enable_bosscheck_counter and existsL(sense_hostile,0.3+lagx/2)) then bossBattle()
 				elseif (not findMove() and not (existsL(menu,0))) then exploreBattle() ; if(existsL(revive,0)) then return end end
 			end
 		end
 	end
 end
 
-function colosseumBattle()
-	local home = Pattern("homeico.png")
-	local col = Pattern("colosseum.png")
-	local col_h = Pattern("colosseum_h.png")
-	local enter = Pattern("colosseum_enter.png")
-	local cbattle = backbtn:targetOffset(240,130) -- first colosseum rank
-	local fight = Pattern("colosseum_fight.png")
-	local no_orbs = Pattern("no_colosseum_orbs.png")
-	local col_won = Pattern("colosseum_won.png")
-	local home_bottom = Pattern("home_bottom.png")
-	local world = Pattern("world.png")
-	local world_h = Pattern("world_h.png")
-	
-	top_reg:existsClick(home); wait(3+(2*lagx))
-	bottom_reg:existsClick(col); bottom_reg:existsClick(col_h); wait(3+(2*lagx))
-	existsClick(enter); wait(3+(2*lagx))
-	for i=0,2 do
-		if(exists(no_orbs)) then 
-			existsClick(nobtn);wait(3+(2*lagx)); break
-		else
-			click(cbattle); wait(3+(2*lagx)); click(cbattle); wait(3+(2*lagx))
-			existsClick(fight); wait(3+(2*lagx))
-			if(exists(no_orbs)) then existsClick(nobtn);wait(3+(2*lagx)); break end
-			existsClick(autobtn,3)
-			for i=0,45 do
-				wait(2)
-				existsClick(col_won)
-				existsClick(connect_ok) -- Cleared reward
-				existsClick(closebtn) -- Daily quest finish
-				if(exists(backbtn)) then break end
-				connectionCheck()
-			end
-		end
-	end
-	colosseumTimer:set() --reset colosseum timer
-	bottom_reg:existsClick(home_bottom,1*lagx); wait(3+(2*lagx))
-	if(not exists(world)) then bottom_reg:existsClick(home_bottom,1*lagx); wait(3+(2*lagx)) end
-	existsClick(world); existsClick(world_h); wait(3+(2*lagx))
-	click(center); wait(3+(2*lagx))
-end
+-- Handles game over events. To be called from resultsExit().
 
 function gameOver()
-	local giveup = Pattern("giveupnow.png")
-
 	usePreviousSnap(false)
-	if(exists(revive,lagx/2)) then 
+	if(existsL(revive,lagx/2)) then 
 		if (continue_on_gameover) then
-			existsClick(nobtn); wait(1+(2*lagx)) 
+			existsClickL(nobtn); wait(0.5+(1.2*lagx)) 
 		else
 			scriptExit("Game Over")
 		end
 	end
-	if(exists(giveup,lagx/2)) then existsClick(yesbtn); wait(2+(2*lagx)); gameover_count = gameover_count + 1 end
-end
-
-function gameOverNoWait()
-	local giveup = Pattern("giveupnow.png")
-	
-	if(existsL(revive,0)) then 
-		if (continue_on_gameover) then
-			existsClick(nobtn)
-		else
-			scriptExit("Game Over")
-		end
-	end
-	if(exists(giveup,0)) then existsClick(yesbtn) ; gameover_count = gameover_count + 1 end
+	if(existsL(giveup,lagx/2)) then existsClickL(yesbtn); wait(1+(1.25*lagx)); gameover_count = gameover_count + 1 end
 end
 
 function explore2(location)
@@ -1257,11 +1255,8 @@ function explore2(location)
 		if(exists(menu,1)) then break end
 	end
 	if(debug_mode) then runlog("Explore start",true) end
---	toast("Waiting few moments before starting "..location)
 	wait(lagx/4)
 	
---	always_findmove = false
-
 	findMove()
 	
 	for i,v in pairs(getPath(explorePath[location])) do
@@ -1305,18 +1300,8 @@ function explore2(location)
 				go(v:split(",")[1],tonumber(v:split(",")[2]))  -- single steps
 			end
 		else
---			if (debug_mode) then runlog(v,true) end
 			if(tonumber(v:split(",")[2])>20) then
---				if(step_mode==2 or move_counter >= enable_bosscheck_counter or tonumber(v:split(",")[2])<4000) then
 					go(v:split(",")[1],(tonumber(v:split(",")[2])*(0.70+(lagx*0.30))))
---				elseif(tonumber(v:split(",")[2])<7500) then
---					go(v:split(",")[1],(tonumber(v:split(",")[2])*(0.35+(lagx*0.16))))
---					go(v:split(",")[1],(tonumber(v:split(",")[2])*(0.35+(lagx*0.16))))
---				else
---					go(v:split(",")[1],(tonumber(v:split(",")[2])*(0.235+(lagx*0.11))))
---					go(v:split(",")[1],(tonumber(v:split(",")[2])*(0.235+(lagx*0.11))))
---					go(v:split(",")[1],(tonumber(v:split(",")[2])*(0.235+(lagx*0.11))))
-	--			end
 			else
 				go(v:split(",")[1],tonumber(v:split(",")[2]))  -- single steps
 			end
@@ -1325,130 +1310,28 @@ function explore2(location)
 	finishExplore()
 end
 
-function esLBFarm()
-	for i=0,60000 do
-		if(i%5==0) then connectionCheck() end
-		if(exists(autobtn)) then 
-			if(debug_mode) then runlog("autobtn") end
-			wait(2); click(getLastMatch():offset(135,-660 * aRatio)); click(getLastMatch()) -- single target a mob then auto
-		end
-		if(top_reg:exists(results_big)) then break end -- battle done
-	end
-end
+-- I guess this is only useful for "esper" for now.
 
 function battleChoice(unittype)
 	local Esper = Pattern("SB_Esper.png")
-	local BackButton = Pattern("backbutton.png"):similar(0.8)
 
 	if (unittype == "esper") then				-- ESPER only
-		if(SB_reg:existsClick(Esper,lagx/5)) then 
+		if(control_reg:existsClick(Esper,lagx*0.2)) then 
 			if (debug_mode) then runlog("Esper click : ") end
 			return true
 		else
-			SB_reg:existsClick(BackButton,0)
+			control_reg:existsClick(BackButton,0)
 			return false
-		end
-	else
-		local Limit = Pattern("SB_LBFilled.png")
-		local Sword = Pattern("SB_Sword.png")
-		local Break = Pattern("SB_Break.png")
-		local Blast = Pattern("SB_Blast.png")
-	--	local Aero = Pattern("SB_Aero.png")
-		local Shot = Pattern("SB_Shot.png")
-		local Curaja = Pattern("SB_Curaja.png")
-	--	local Fire = Pattern("SB_Fire.png")
-	--	local Blizzard = Pattern("SB_Blizzard.png")
-	--	local Thunder = Pattern("SB_Thunder.png")
-	--	local Holy = Pattern("SB_Holy.png")
-	--	local Dark = Pattern("SB_Dark.png")
-	--	local Drain = Pattern("SB_Drain.png")
-	--	local Stone = Pattern("SB_Stone.png")
-	--	local Water = Pattern("SB_Water.png")
-	--	local Poison = Pattern("SB_Poison.png")
-		local Buff = Pattern("SB_Buff.png")
-		local Steal = Pattern("SB_Steal.png")
-	--	local Kick = Pattern("SB_Kick.png")
-		local Cover = Pattern("SB_Cover.png")
-		local Damage1 = Pattern("SB_Damage1.png")
-		local Damage2 = Pattern("SB_Damage2.png")
-		local NoLB = Pattern("SB_NoLB.png"):similar(0.5)
-		local InsufficientMP = Pattern("SB_InsufficientMP.png"):similar(0.7)
-		local CantEvoke = Pattern("SB_CantEvoke.png"):similar(0.5)	
-	end
-	
-	if (unittype == "healer") then
-		if(not SB_reg:existsClick(Limit,0)) then
-			usePreviousSnap(true)
-			if (debug_mode) then runlog("no limit") end
-			if (not SB_reg:exists(NoLB,0)) then
-				if (debug_mode) then runlog("error unit healer") end
-				return false
-			elseif (not SB_reg:exists(CantEvoke,0)) then
-				SB_reg:existsClick(Esper,0)
-			else
-				if (debug_mode) then runlog("no esper") end
-				usePreviousSnap(false)
-				dragDrop(Location(300,830 * aRatio), Location(300,(650 - math.random(220)) * aRatio))
-				wait (1.2+lagx/2)
-				if (SB_reg:exists(InsufficientMP,0)) then 
-					SB_reg:existsClick(BackButton,0)
-					return false
-				elseif (not SB_reg:existsClick(Curaja,0)) then
-					usePreviousSnap(true)
-					if (not SB_reg:existsClick(Buff,0)) then
-						if (not SB_reg:existsClick(Damage1,0)) then
-							if (not SB_reg:existsClick(Damage2,0)) then
-								while (true) do
-									if (not SB_reg:exists(BackButton,0)) then break end
-									click(Location(math.random(10,550 * aRatio),math.random(550,855 * aRatio)))
-									wait(0.2)
-									dragDrops(Location(300,750 * aRatio), Location(300,(850 - math.random(200)) * aRatio))
-									usePreviousSnap(false)
-								end
-							end
-						end
-					else
-						wait(lagx/4)
-						click(Location(math.random(10,550),math.random(550*aRatio,855*aRatio)))
-					end
-				else
-					wait(lagx/4)
-					click(Location(math.random(10,550),math.random(550*aRatio,855*aRatio)))
-				end
-			end
-		end
-	elseif (unittype == "physdamage") then
-		if(not SB_reg:existsClick(Limit,0.1)) then 
-			usePreviousSnap(true)
-			SB_reg:existsClick(Esper,0)
-			usePreviousSnap(false)
-			wait(0.2)
-			if (exists(BackButton,0)) then
-				usePreviousSnap(false)
-				dragDrop(Location(getLastMatch():getX()-width/2,getLastMatch():getY()-100), Location(getLastMatch():getX()-width/2,getLastMatch():getY() - 150 - math.random(height/2 * aRatio)))
-				wait (0.8+lagx/2)
-				if (SB_reg:exists(InsufficientMP,lagx/5)) then 
-					SB_reg:existsClick(BackButton,0)
-					usePreviousSnap(false)
-					return false
-				end
-				usePreviousSnap(true)
-				if (not SB_reg:existsClick(Damage2,0)) then
-					if (not SB_reg:existsClick(Damage1,0)) then
-						SB_reg:existsClick(BackButton,0)
-						usePreviousSnap(false)
-						return false
-					end
-				end
-			end
 		end
 	end
 	
 	usePreviousSnap(false)
 	wait(0.2)
-	SB_reg:existsClick(BackButton,0)
+	control_reg:existsClick(BackButton,0)
 	return true
 end
+
+-- Auto Battle, the standard way in dungeons.
 
 function battleAuto()
 	local tempi = 0
@@ -1460,7 +1343,7 @@ function battleAuto()
 		usePreviousSnap(true)
 		if(tempi%19==0) then connectionCheckNoWait() end
 		if(tempi%17==0 and existsL(revive,0)) then break end
-		if(top_reg:exists(results_big,0)) then click(getLastMatch()) ; click(center) ; break end
+		if(existsL(results_big,0)) then break end
 		if(existsL(questclear,0)) then break end
 		if(not existsL(menuinbattle,0)) then break end
 	end
@@ -1468,21 +1351,21 @@ function battleAuto()
 
 end
 
+-- Dungeon battle with Esper enabled.
+
 function battleEsper()
 	local tempi = 0
-	local esperfilled = Pattern("SB_EsperFilled.png"):similar(0.7)
-	local IsReady = Pattern("SB_MyTurn.png")
 	--boss = (boss or false)
 	local auto_pressed = false
 
 	while(true) do
 		tempi = tempi + 1
 		usePreviousSnap(false)
-		if (right_reg:exists(esperfilled,lagx/5)) then
+		if (existsL(esperfilled,lagx/5)) then
 			if (debug_mode) then getLastMatch():highlight(0.2); runlog("\tEsper - ") end
 			if (not existsClickL(autoonbtn,0)) then
 				usePreviousSnap(true)
-				if (exists(IsReady,0)) then
+				if (bottom_reg:exists(IsReady,0)) then
 					auto_pressed = false
 					dragDrop(Location(getLastMatch():getX()+20,getLastMatch():getY()+30),Location(getLastMatch():getX()+250,getLastMatch():getY()+30))
 					wait(0.1+lagx/4)
@@ -1504,97 +1387,238 @@ function battleEsper()
 			end
 		end
 		if(existsL(results,0)) then
-			if(debug_mode) then getLastMatch():highlight(0.2) ; runlog("Result screen") end
+			if(debug_mode) then runlog("Result screen") end
 			click(getLastMatch())
 		end
 		usePreviousSnap(true)
-		if(bottom_reg:exists(menu,0) or top_reg:exists(battle_won,0) or top_reg:exists(battle_won2,0) or top_reg:exists(continue_ask,0)) then break end
+		if(existsL(menu,0) or existsL(battle_won,0) or existsL(battle_won2,0) or existsL(continue_ask,0)) then break end
 		if(tempi%17==0 and exists(revive,0)) then break end
-		if(top_reg:exists(results_big,0)) then click(getLastMatch()) ; click(center) ; click(Location(300,890 * aRatio)) ; break end
-		if(exists(questclear,0)) then break end
+		if(existsL(results_big,0)) then click(getLastMatch()) ; click(center) ; click(Location(300,890 * aRatio)) ; break end
+		if(existsL(questclear,0)) then break end
 		if(not existsL(menuinbattle,0)) then break end
 	end
 	usePreviousSnap(false)
 end
 
+-- New function smart battle will select skills and repeat them endlessly.
+-- choose function for smartBattle
+-- Needs to have regions defined first
+
+function smartBattle_choose(skilluse, skillmp)
+	for i=1, 5 do
+		if (debug_mode) then sb_regunit[i]:highlight(0.2) end
+		if (skilluse[i] == "None") then
+		elseif (sb_regunit[i]:exists(IsReady,lagx*0.75)) then
+			skillToUse = sb_skills[skilluse[i]]
+			skillSuccess = false
+			skillTries = 0
+			if (debug_mode) then runlog("Unit #"..i.." action. Skill : "..skilluse[i], true) end
+			setDragDropStepCount(50)
+			setDragDropStepInterval(1)
+			setDragDropTiming(100,20)
+			dragDrop(Location(sb_regunit[i]:getX() + 15, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)), Location(sb_regunit[i]:getX() + sb_regunit[i]:getW() - 15, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)))
+			setDragDropStepCount(150+lagx*30)
+			setDragDropStepInterval(2)
+			setDragDropTiming(100,20)
+			wait(0.2+lagx*0.25)
+			while(true) do
+				if (skillSuccess) then
+					break
+				elseif (skillTries > 5) then
+					if (debug_mode) then runlog("Exists Click Back",true) end
+					if (existsClick(BackButton, 0)) then wait(0.25+lagx*0.35) ; break end
+				elseif (sb_reg:exists(skillToUse, 0)) then
+
+					findSkills = regionFindAllNoFindException(sb_reg,skillToUse)
+					for n, m in ipairs(findSkills) do
+						if (debug_mode) then m:highlight(0.2) end
+						mp_reg = Region(m:getX(), m:getY()+m:getH()*0.8, 60,55*aRatio)
+						if (debug_mode) then mp_reg:highlight(0.2) end								
+						mp, retval = numberOCRNoFindException(mp_reg,"mp")
+						if (retval and mp == skillmp[i]) then
+							click(m)
+							skillSuccess = true
+							if (skilluse[i] == "Cure" or skilluse[i] == "Buff" or skilluse[i] == "Cover (Noctis)") then
+								wait(0.05+lagx*0.05)
+								click(Location(sb_regunit[i]:getX() + sb_regunit[i]:getW()/2, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)))
+							end
+							wait(0.2+lagx*0.25)
+							break
+						end								
+					end
+					
+					if (not skillSuccess) then
+						if (debug_mode) then runlog("Found not successful.",true) end
+						dragDrop(Location( sb_reg:getX()+sb_reg:getW()/2 , sb_reg:getY()+sb_reg:getH()-35 ) , Location( sb_reg:getX()+sb_reg:getW()/2 , sb_reg:getY()+25 ) ) 
+						skillTries = skillTries + 1
+					end
+					
+				else
+					if (debug_mode) then runlog("Not found.",true) end
+					dragDrop(Location(sb_reg:getX()+sb_reg:getW()/2,sb_reg:getY()+sb_reg:getH()-35 ), Location(sb_reg:getX()+sb_reg:getW()/2,sb_reg:getY()+25))
+					skillTries = skillTries + 1
+				end
+			end
+		end
+	end
+
+	setDragDropStepCount(50)
+	setDragDropStepInterval(1)
+	setDragDropTiming(100,20)
+
+end
+
+-- Define Regions first
+
+function defineSBreg()
+	local rX = 99999
+	local rY = 99999
+	local rX2 = 0
+	local rY2 = 0
+		
+	if (bottom_reg:exists(IsReady,lagx/3)) then
+		findUnit = regionFindAllNoFindException(left_reg,IsReady)
+		for i,u in ipairs(findUnit) do
+			if (debug_mode) then u:highlight(0.2); runlog("Unit #"..i, true) end
+			sb_regunit[i] = Region(u:getX()-10,u:getY()-10,295,115)
+			if (debug_mode) then sb_regunit[i]:highlight(0.2) end
+			if (rX > u:getX()) then rX = u:getX() end
+			if (rY > u:getY()) then rY = u:getY() end
+			if (rX2 < (u:getX() + u:getW())) then rX2 = u:getX()+u:getW() end
+			if (rY2 < (u:getY() + u:getH())) then rY2 = u:getY()+u:getH() end
+		end
+		findUnit = regionFindAllNoFindException(right_reg,IsReady)
+		for i,u in ipairs(findUnit) do
+			if (debug_mode) then u:highlight(0.2); runlog("Unit #"..i+3, true) end
+			sb_regunit[i+3] = Region(u:getX()-10,u:getY()-10,295,115)
+			if (debug_mode) then sb_regunit[i+3]:highlight(0.2) end
+			if (rX > u:getX()) then rX = u:getX() end
+			if (rY > u:getY()) then rY = u:getY() end
+			if (rX2 < (u:getX() + u:getW())) then rX2 = u:getX()+u:getW() end
+			if (rY2 < (u:getY() + u:getH())) then rY2 = u:getY()+u:getH() end
+		end
+		sb_reg = Region(rX, rY, rX2-rX+263, rY2-rY+(103))
+		if (debug_mode) then sb_reg:highlight(0.2) end
+	end
+end
+
+-- Main smartBattle function
+
 function smartBattle()
-	local tempi = 0
-	local num_turns = 0
-	local BackButton = Pattern("backbutton.png"):similar(0.8)
-	local IsReady = Pattern("SB_MyTurn.png")
-	local unit1Error = 0
-	local unit2Error = 0
-	local unit3Error = 0
-	local unit4Error = 0
-	local unit5Error = 0
-	local unit6Error = 0
 	local findUnit = nil
+	local findSkills = nil
+	local skillToUse = nil
+	local mp = 0
+	local mp_reg = nil
+	local retval = false
+	local skillSuccess = false
+	local skillTries = 0
+	local state = 0
+	local tempi = 0
+	local round = 0
 
-	usePreviousSnap(false)
---	unit1_reg = Region(8,555,286,100)
---	unit2_reg = Region(8,665,286,100)
---	unit3_reg = Region(8,775,286,100)
---	unit4_reg = Region(304,555,286,100)
---	unit5_reg = Region(304,665,286,100)
---	unit6_reg = Region(304,775,286,100)
+	while(sb_reg == nil) do
+		defineSBreg()
+	end
 
-	while (true) do
+	while(true) do
 		tempi = tempi + 1
 		usePreviousSnap(false)
-		if(top_reg:exists(results_big,lagx/2)) then click(center) ; click(Location(300,890 * aRatio)) ; break end
+		if(existsL(questclear,0)) then break end
 		usePreviousSnap(true)
-		if(tempi%10==0 and exists(revive,0)) then break end
-		if(tempi%13==0) then connectionCheckNoWait() end
-		if(exists(questclear,0)) then break end
-		
-		-- If we accidentaly Libra'd
-		existsClick(closebtn,0)
-		
-		-- If we somehow stuck
-		SB_reg:existsClick(BackButton,0)
-		
-		if(SB_reg:existsClick(autoonbtn,0)) then 
-			if (debug_mode) then runlog("Auto off", true) end
-		elseif(not SB_reg:exists(IsReady,0)) then 
-			if (debug_mode) then runlog("Waiting for turn...", true) end
-		elseif not (num_turns%4 == 0) and math.random(100) > 3 and existsClick(repeatbtn,0) then
-			num_turns = num_turns + 1
-			if (debug_mode) then runlog("Repeating last action.", true) end
-		elseif num_turns > 0 and math.random(100) > 98 and SB_reg:existsClick(autobtn,0) then
-			num_turns = num_turns + 1
-			if (debug_mode) then runlog("Auto.", true) end
-		elseif(SB_reg:exists(autobtn,0)) then 
-			if (debug_mode) then runlog("smart choice", true) end
-			
-			findUnit = findAllNoFindException(IsReady)
-			for i,u in ipairs(findUnit) do
-				dragDrop(Location(u:getX()+10,u:getY()+20),Location(u:getX()+190,u:getY()+20))
-				wait(0.3+lagx/3)
-				battleChoice("physdamage")
+		if(existsL(revive,0)) then break end
+		if(existsL(results_big,0)) then break end
+		usePreviousSnap(false)
+		if (debug_mode) then runlog("State : "..state,true) end
+		if(state == 0 and bottom_reg:exists(IsReady,0)) then		-- 0-9 are states for first smart battle handling
+			wait(0.1)
+			smartBattle_choose(sb_skilluse, sb_skillmp)
+			wait(0.05+lagx*0.05)
+			existsClickL(autobtn,0)
+			state = 1
+			round = 1
+		elseif(state == 1) then
+			existsClickL(autoonbtn,0)
+			state = 9
+		elseif(state == 9) then				
+			usePreviousSnap(true)
+			if(use_smart_battle_boss and existsL(boss,0)) then
+				state = 20
+			elseif(use_smart_battle_2nd and round >= use_smart_battle_2nd_round) then
+				state = 10
+			elseif(bottom_reg:exists(IsReady,0)) then
+				existsClickL(repeatbtn,0)
+				round = round + 1
 			end
-			
-			SB_reg:existsClick(BackButton,0.2)
-			num_turns = num_turns + 1
-			SB_reg:existsClick(autobtn,1+lagx/3)
+		elseif(state == 10 and bottom_reg:exists(IsReady,0)) then									-- 10-19 for 2nd smart battle
+			wait(0.1)
+			smartBattle_choose(sb_skilluse2, sb_skillmp2)
+			wait(0.05+lagx*0.05)
+			existsClickL(autobtn,0)
+			state = 11
+			round = round + 1		
+		elseif(state == 11) then
+			existsClickL(autoonbtn,0)
+			state = 19
+		elseif(state == 19) then				
+			usePreviousSnap(true)
+			if(use_smart_battle_boss and existsL(boss,0)) then
+				state = 20
+			elseif(bottom_reg:exists(IsReady,0)) then
+				existsClickL(repeatbtn,0)
+				round = round + 1
+			end
+		elseif(state == 20 and bottom_reg:exists(IsReady,0)) then
+			wait(0.1)
+			smartBattle_choose(sb_skilluse_boss, sb_skillmp_boss)
+			wait(0.05+lagx*0.05)
+			existsClickL(autobtn,0)
+			wait(0.05+lagx*0.05)
+			existsClickL(autoonbtn,0)
+			wait(0.2+lagx*0.2)
+			round = round + 1		
+			if (use_smart_battle_boss_2nd) then
+				state = 21
+			else
+				state = 29
+			end
+		elseif(state == 21 and bottom_reg:exists(IsReady,0)) then
+			wait(0.1)
+			smartBattle_choose(sb_skilluse_boss2, sb_skillmp_boss2)
+			wait(0.05+lagx*0.05)
+			existsClickL(autobtn,0)
+			wait(0.05+lagx*0.05)
+			existsClickL(autoonbtn,0)
+			wait(0.2+lagx*0.2)
+			state = 29
+			round = round + 1		
+		elseif(state == 29) then				
+			usePreviousSnap(true)
+			if(bottom_reg:exists(IsReady,0)) then
+				existsClickL(repeatbtn,0)
+				round = round + 1
+			end
 		end
-		wait(0.1+lagx/10)
 	end
-	usePreviousSnap(false)
 end
+
+------------------------------------------------------------------------------------------------------------
+-------------------------------------------- MAIN FUNCTION START -------------------------------------------
+------------------------------------------------------------------------------------------------------------
 
 -- Check version of AnkuLua first.
 ALver, ALpro = getALVer()
-
---toast(ALver)
---if ALpro then toast("Pro") end
 	
 dialogInit()
 farmList = {}
 
-for i,v in pairs(farm) do
+for i,v in pairsByKeys(special_farm) do
 	farmList[#farmList+1] = i
 end
-for i,v in pairs(custom) do
+for i,v in pairsByKeys(farm) do
+	farmList[#farmList+1] = i
+end
+for i,v in pairsByKeys(custom) do
 	farmList[#farmList+1] = v
 end
 
@@ -1604,7 +1628,6 @@ newRow()
 addCheckBox("loot", "Find Battle?", false)
 if (ALpro) then addCheckBox("dimscreen", "Dim screen?", false) else dimscreen = false end
 newRow()
---addCheckBox("colosseumsched", "Colosseum Schedule? **BETA**", false)
 --newRow()
 addCheckBox("debug_mode", "Debug mode?", false)
 addCheckBox("refill", "Refill Energy?", false)
@@ -1621,6 +1644,7 @@ addTextView("Battle mode :")
 addRadioGroup("battle_mode", 1)
 addRadioButton("Auto (Default)", 1)
 addRadioButton("Use Espers", 2)
+addRadioButton("Custom (Dungeons Only)", 3)
 newRow()
 addTextView("Swipe mode")
 addRadioGroup("trace_mode",1)
@@ -1640,15 +1664,241 @@ addTextView("Depart count (99999 for infinite) :")
 addEditNumber("max_depart_count",99999)
 newRow()
 addCheckBox("help_screen", "Show help?", false)
---addTextView("Network Lag multiplier:")
---addEditNumber("lagc",1.1)
 
 dialogShow(ver)
+
+if (battle_mode == 3) then
+	skillsList = {}
+
+	for i,v in pairsByKeys(sb_skills) do
+		skillsList[#skillsList+1] = i
+	end
+
+	use_smart_battle = true
+
+	dialogInit()
+	addTextView("Set unit skill icons and MP usage below : ")
+	newRow()
+	newRow()
+	addTextView("Will only be used in dungeons.")
+	if (ALver >= "6.8.0") then
+		newRow()
+		addSeparator()
+		newRow()
+	else
+		newRow()
+		newRow()
+		newRow()
+	end
+	addTextView("1st Battle Actions : ")
+	newRow()
+	newRow()
+	addTextView("Unit 1 :")
+	addSpinner("unit1",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit1mp",0)
+	newRow()
+	addTextView("Unit 2 :")
+	addSpinner("unit2",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit2mp",0)
+	newRow()
+	addTextView("Unit 3 :")
+	addSpinner("unit3",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit3mp",0)
+	newRow()
+	addTextView("Unit 4 :")
+	addSpinner("unit4",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit4mp",0)
+	newRow()
+	addTextView("Unit 5 :")
+	addSpinner("unit5",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit5mp",0)
+	newRow()
+	newRow()
+	newRow()
+	addCheckBox("use_smart_battle_2nd", "Use 2nd battle skills?", true)
+	newRow()
+	addTextView("Use 2nd battle skillset after this many actions :")
+	addEditNumber("use_smart_battle_2nd_round",3)
+	newRow()
+	newRow()
+	addTextView("2nd Battle Actions : ")
+	newRow()
+	newRow()
+	addTextView("Unit 1 :")
+	addSpinner("unit1z",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit1zmp",0)
+	newRow()
+	addTextView("Unit 2 :")
+	addSpinner("unit2z",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit2zmp",0)
+	newRow()
+	addTextView("Unit 3 :")
+	addSpinner("unit3z",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit3zmp",0)
+	newRow()
+	addTextView("Unit 4 :")
+	addSpinner("unit4z",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit4zmp",0)
+	newRow()
+	addTextView("Unit 5 :")
+	addSpinner("unit5z",skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("unit5zmp",0)
+	newRow()
+	newRow()
+	newRow()
+	addCheckBox("use_smart_battle_boss", "Use Boss Battle Skills?", true)
+
+	dialogShow("Custom Unit Actions")
+
+	if (use_smart_battle_boss) then
+	
+		dialogInit()
+		addTextView("Set unit skill icons and MP usage below : ")
+		newRow()
+		newRow()
+		addTextView("Will only be used in dungeons.")
+		if (ALver >= "6.8.0") then
+			newRow()
+			addSeparator()
+			newRow()
+		else
+			newRow()
+			newRow()
+			newRow()
+		end
+		addTextView("1st Boss Actions : ")
+		newRow()
+		newRow()
+		addTextView("Unit 1 :")
+		addSpinner("unit1b",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit1bmp",0)
+		newRow()
+		addTextView("Unit 2 :")
+		addSpinner("unit2b",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit2bmp",0)
+		newRow()
+		addTextView("Unit 3 :")
+		addSpinner("unit3b",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit3bmp",0)
+		newRow()
+		addTextView("Unit 4 :")
+		addSpinner("unit4b",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit4bmp",0)
+		newRow()
+		addTextView("Unit 5 :")
+		addSpinner("unit5b",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit5bmp",0)
+		newRow()
+		newRow()
+		newRow()
+		addCheckBox("use_smart_battle_boss_2nd", "Use 2nd boss battle skills?", true)
+		newRow()
+		newRow()
+		newRow()
+		addTextView("2nd Boss Actions : ")
+		newRow()
+		newRow()
+		addTextView("Unit 1 :")
+		addSpinner("unit1zb",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit1zbmp",0)
+		newRow()
+		addTextView("Unit 2 :")
+		addSpinner("unit2zb",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit2zbmp",0)
+		newRow()
+		addTextView("Unit 3 :")
+		addSpinner("unit3zb",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit3zbmp",0)
+		newRow()
+		addTextView("Unit 4 :")
+		addSpinner("unit4zb",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit4zbmp",0)
+		newRow()
+		addTextView("Unit 5 :")
+		addSpinner("unit5zb",skillsList,"None")
+		addTextView("MP :")
+		addEditNumber("unit5zbmp",0)
+		newRow()
+		newRow()
+		newRow()
+
+		dialogShow("Custom Boss Unit Actions")
+
+	end
+	
+	sb_skilluse[1] = unit1
+	sb_skilluse[2] = unit2
+	sb_skilluse[3] = unit3
+	sb_skilluse[4] = unit4
+	sb_skilluse[5] = unit5
+	
+	sb_skillmp[1] = unit1mp
+	sb_skillmp[2] = unit2mp
+	sb_skillmp[3] = unit3mp
+	sb_skillmp[4] = unit4mp
+	sb_skillmp[5] = unit5mp
+
+	sb_skilluse2[1] = unit1z
+	sb_skilluse2[2] = unit2z
+	sb_skilluse2[3] = unit3z
+	sb_skilluse2[4] = unit4z
+	sb_skilluse2[5] = unit5z
+	
+	sb_skillmp2[1] = unit1zmp
+	sb_skillmp2[2] = unit2zmp
+	sb_skillmp2[3] = unit3zmp
+	sb_skillmp2[4] = unit4zmp
+	sb_skillmp2[5] = unit5zmp
+
+	sb_skilluse_boss[1] = unit1b
+	sb_skilluse_boss[2] = unit2b
+	sb_skilluse_boss[3] = unit3b
+	sb_skilluse_boss[4] = unit4b
+	sb_skilluse_boss[5] = unit5b
+
+	sb_skillmp_boss[1] = unit1bmp
+	sb_skillmp_boss[2] = unit2bmp
+	sb_skillmp_boss[3] = unit3bmp
+	sb_skillmp_boss[4] = unit4bmp
+	sb_skillmp_boss[5] = unit5bmp
+
+	sb_skilluse_boss2[1] = unit1zb
+	sb_skilluse_boss2[2] = unit2zb
+	sb_skilluse_boss2[3] = unit3zb
+	sb_skilluse_boss2[4] = unit4zb
+	sb_skilluse_boss2[5] = unit5zb
+
+	sb_skillmp_boss2[1] = unit1zbmp
+	sb_skillmp_boss2[2] = unit2zbmp
+	sb_skillmp_boss2[3] = unit3zbmp
+	sb_skillmp_boss2[4] = unit4zbmp
+	sb_skillmp_boss2[5] = unit5zbmp
+
+	end
 
 if (help_screen) then
 	dialogInit()
 	addTextView("Welcome to ffbeAuto Z Help Screen")
-	if (ALver > "6.8.0") then
+	if (ALver >= "6.8.0") then
 		addSeparator()
 		addSeparator()
 	else
@@ -1666,7 +1916,7 @@ if (help_screen) then
 	addTextView("Use a reasonable Device Lag Multiplier, minimum 1.0 for high end devices, adjust with device performance.")	
 	newRow()
 	addTextView("Please note that emulators needs a higher Lag Multiplier due to the inherent choppiness to be safe.")	
-	if (ALver > "6.8.0") then
+	if (ALver >= "6.8.0") then
 		addSeparator()
 		addSeparator()
 	else
@@ -1703,8 +1953,6 @@ if(comp_mode == 3) then use_highest_atk_companion = true end
 
 if(farmloc == "dungeon_finder") then selectDungeon() -- get custom dungeon location
 elseif(farmloc == "free_farm") then freeFarm() end 
-
-if (max_depart_count == 99999) then toast("Infinite Depart") end
 
 if (height >= width) then aRatio = (height / width) / 1.6					-- Aspect ratio correction from 960 height 600 width which is 1.6 ratio
 else aRatio = (width / height) / 1.6
