@@ -4,7 +4,7 @@
 -- Nox
 -- http://ankulua.boards.net/thread/167/brave-exvius-ffbeauto-farming-explorations
 
-ver = "ffbeAuto Z12 BETA 1"
+ver = "ffbeAuto Z12 BETA 3"
 ALver = "0"															-- AnkuLua version string
 ALpro = true														-- is this AnkuLua a Pro and not trial?
 
@@ -60,7 +60,7 @@ raid_orbs_no = Pattern("raid_orbs_no.png"):similar(0.7)
 revive = Pattern("lapis_revive.png"):similar(0.7)
 giveup = Pattern("giveupnow.png")
 esperfilled = Pattern("SB_EsperFilled.png"):similar(0.7)
-IsReady = Pattern("SB_MyTurn.png"):similar(0.7)
+IsReady = Pattern("SB_MyTurn.png"):similar(0.73)
 BackButton = Pattern("backbutton.png"):similar(0.8)
 boss = Pattern("bossbattle.png"):similar(0.7)
 
@@ -96,6 +96,10 @@ use_smart_battle_2nd = true
 use_smart_battle_2nd_round = 3
 use_smart_battle_boss = true
 use_smart_battle_boss_2nd = true
+use_smart_battle_boss_companion = true
+use_smart_battle_boss_companion_2nd = true
+use_smart_battle_boss_companion_mp = 30
+use_smart_battle_boss_companion_2nd_mp = 30
 continue_on_gameover = true
 goldcheck_success = false						-- Has gold check ever successful?
 leave_after_boss = false						-- Exploration value - leave after boss instead of continuing.
@@ -133,6 +137,8 @@ dl = {center:offset(-diff,diff)}
 dr = {center:offset(diff,diff)}
 
 aRatio = 1
+step_mode = 1									-- LEGACY options
+trace_mode = 1									-- LEGACY options
 
 top = Location(300,150)
 bottom = Location(300,750)
@@ -159,7 +165,17 @@ sb_skills["Poison"] = Pattern("SB_Poison.png")
 sb_skills["Buff"] = Pattern("SB_Buff.png")
 sb_skills["Steal"] = Pattern("SB_Steal.png")
 sb_skills["Kick"] = Pattern("SB_Kick.png")
+sb_skills["Ultima"] = Pattern("SB_Ultima.png")
+sb_skills["Provoke"] = Pattern("SB_Provoke.png")
+sb_skills["Dance"] = Pattern("SB_Dance.png")
+sb_skills["Sing"] = Pattern("SB_Sing.png")
+sb_skills["Elements"] = Pattern("SB_Elements.png")
+sb_skills["Status"] = Pattern("SB_Status.png")
 sb_skills["Cover (Noctis)"] = Pattern("SB_Cover.png")
+
+-- Not in table
+SB_MP = Pattern("SB_MP.png"):similar(0.7)
+SB_Raise = Pattern("SB_Raise.png"):similar(0.7)
 
 sb_skilluse = {}										-- Skill to use
 sb_skillmp = {}											-- MP match
@@ -1028,20 +1044,18 @@ function fFarm(location)
 				if (func_state ~= 21) then
 					func_state = 21
 					if ((use_bonus_unit == true and friendsBONUSreg == nil) and (friendsreg == nil)) then
-						wait(0.7 + lagx/2) -- wait for animation
+						wait(0.7 + lagx * 0.5) -- wait for animation
 					else
-						wait(0.1)
+						wait(0.2 + lagx * 0.2)
 					end
-				elseif use_bonus_unit == true and friendsBONUSreg == nil and left_reg:exists(bonus_unit,lagx*0.5) then			-- BONUS! image pulses, soooo needs time.
-					tempbtn = getLastMatch()
-					friendsBONUSreg = Region(getLastMatch():getX()-15,80,getLastMatch():getW()+30,height-60)
+				elseif use_bonus_unit == true and friendsBONUSreg == nil and left_reg:exists(bonus_unit,0.5+lagx*0.8) then			-- BONUS! image pulses, soooo needs time.
+					tempbtn = left_reg:getLastMatch()
+					friendsBONUSreg = Region(tempbtn:getX()-30,120,tempbtn:getW()+60,1000)
 					if(debug_mode) then friendsBONUSreg:highlight(0.35) ; runlog("Companion : Bonus", true) end
 					click(tempbtn)
 					func_state = 0
-				elseif use_bonus_unit == true and not friendsBONUSreg == nil and friendsBONUSreg:exists(bonus_unit,lagx*0.5) then								-- BONUS! image pulses, soooo needs time.
-					tempbtn = friendsBONUSreg:getLastMatch()
-					if(debug_mode) then getLastMatch():highlight(0.15) ; runlog("Companion : Bonus", true) end
-					click(tempbtn)
+				elseif use_bonus_unit == true and friendsBONUSreg ~= nil and friendsBONUSreg:existsClick(bonus_unit,(lagx*1.3)+0.9) then								-- BONUS! image pulses, soooo needs time.
+					if(debug_mode) then runlog("Companion : Bonus", true) end
 					func_state = 0
 				elseif(friendsreg == nil and exists(friend,0)) then
 					friendsreg = Region(getLastMatch():getX()-15,80,getLastMatch():getW()+30,height-60)
@@ -1400,7 +1414,7 @@ function battleEsper()
 	usePreviousSnap(false)
 end
 
--- New function smart battle will select skills and repeat them endlessly.
+-- New function smart battle will select skills.
 -- choose function for smartBattle
 -- Needs to have regions defined first
 
@@ -1412,12 +1426,12 @@ function smartBattle_choose(skilluse, skillmp)
 			skillToUse = sb_skills[skilluse[i]]
 			skillSuccess = false
 			skillTries = 0
-			if (debug_mode) then runlog("Unit #"..i.." action. Skill : "..skilluse[i], true) end
+			if (debug_mode) then runlog("Unit #"..i.." action. Skill : "..skilluse[i].." - MP : "..skillmp[i], true) end
 			setDragDropStepCount(50)
 			setDragDropStepInterval(1)
 			setDragDropTiming(100,20)
 			dragDrop(Location(sb_regunit[i]:getX() + 15, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)), Location(sb_regunit[i]:getX() + sb_regunit[i]:getW() - 15, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)))
-			setDragDropStepCount(150+lagx*30)
+			setDragDropStepCount(150+lagx*75)
 			setDragDropStepInterval(2)
 			setDragDropTiming(100,20)
 			wait(0.2+lagx*0.25)
@@ -1438,7 +1452,7 @@ function smartBattle_choose(skilluse, skillmp)
 						if (retval and mp == skillmp[i]) then
 							click(m)
 							skillSuccess = true
-							if (skilluse[i] == "Cure" or skilluse[i] == "Buff" or skilluse[i] == "Cover (Noctis)") then
+							if (skilluse[i] == "Cure" or skilluse[i] == "Buff" or skilluse[i] == "Sing" or skilluse[i] == "Dance" or skilluse[i] == "Cover (Noctis)") then
 								wait(0.05+lagx*0.05)
 								click(Location(sb_regunit[i]:getX() + sb_regunit[i]:getW()/2, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)))
 							end
@@ -1468,6 +1482,78 @@ function smartBattle_choose(skilluse, skillmp)
 
 end
 
+-- New function smart battle will select skills for companions.
+-- Needs to have regions defined first
+-- Just select based on minimum MP. Finds first skill with more than x MP.
+
+function smartBattle_companion(skillmp)
+	if (debug_mode) then sb_regunit[6]:highlight(0.2) end
+	
+	i = 6
+
+	if (sb_regunit[i]:exists(IsReady,lagx*0.75)) then
+		skillSuccess = false
+		skillTries = 0
+		if (debug_mode) then runlog("Unit #"..i.." action. MP : "..skillmp, true) end
+		setDragDropStepCount(50)
+		setDragDropStepInterval(1)
+		setDragDropTiming(100,20)
+		dragDrop(Location(sb_regunit[i]:getX() + 15, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)), Location(sb_regunit[i]:getX() + sb_regunit[i]:getW() - 15, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)))
+		setDragDropStepCount(150+lagx*75)
+		setDragDropStepInterval(2)
+		setDragDropTiming(100,20)
+		wait(0.2+lagx*0.25)
+		while(true) do
+			if (skillSuccess) then
+				break
+			elseif (skillTries > 3) then
+				if (debug_mode) then runlog("Exists Click Back",true) end
+				wait(0.05+lagx*0.05)
+				if (existsClick(BackButton, 0)) then wait(0.25+lagx*0.35) ; break end
+
+			elseif (sb_reg:exists(SB_MP, 0)) then
+				findSkills = regionFindAllNoFindException(sb_reg,SB_MP)
+				for n, m in ipairs(findSkills) do
+					if (debug_mode) then m:highlight(0.2) end
+					mp_reg = Region(m:getX()+m:getW(), m:getY()-10, 75,m:getH()+20)
+					if (debug_mode) then mp_reg:highlight(0.2) end								
+					mp, retval = numberOCRNoFindException(mp_reg,"mp")
+					if (retval and mp >= skillmp) then
+						icon_reg = Region(m:getX()-20, m:getY()-90, 100,100)
+						if (debug_mode) then icon_reg:highlight(0.2) end														
+						if (icon_reg:exists(SB_Raise,0)) then                    -- Skills to NEVER use, i.e Raise type.
+							if (debug_mode) then runlog("Exists Raise",true) end														
+						else
+							click(m)
+							skillSuccess = true
+							wait(0.05+lagx*0.05)
+							-- ALWAYS self click to be safe from cure/buff/sing skills etc.
+							click(Location(sb_regunit[i]:getX() + sb_regunit[i]:getW()/2, sb_regunit[i]:getY() + (sb_regunit[i]:getH()/2)))
+							wait(0.2+lagx*0.25)
+							break
+						end
+					end								
+				end
+				
+				if (not skillSuccess) then
+					if (debug_mode) then runlog("Found not successful.",true) end
+					dragDrop(Location( sb_reg:getX()+sb_reg:getW()/2 , sb_reg:getY()+sb_reg:getH()-35 ) , Location( sb_reg:getX()+sb_reg:getW()/2 , sb_reg:getY()+25 ) ) 
+					skillTries = skillTries + 1
+				end
+				
+			else
+				if (debug_mode) then runlog("Not found.",true) end
+				dragDrop(Location(sb_reg:getX()+sb_reg:getW()/2,sb_reg:getY()+sb_reg:getH()-35 ), Location(sb_reg:getX()+sb_reg:getW()/2,sb_reg:getY()+25))
+				skillTries = skillTries + 1
+			end
+		end
+	end
+
+	setDragDropStepCount(50)
+	setDragDropStepInterval(1)
+	setDragDropTiming(100,20)
+end
+
 -- Define Regions first
 
 function defineSBreg()
@@ -1479,7 +1565,7 @@ function defineSBreg()
 	if (bottom_reg:exists(IsReady,lagx/3)) then
 		findUnit = regionFindAllNoFindException(left_reg,IsReady)
 		for i,u in ipairs(findUnit) do
-			if (debug_mode) then u:highlight(0.2); runlog("Unit #"..i, true) end
+			if (debug_mode) then u:highlight(0.2); runlog("Unit #"..i.." Match : "..u:getScore(), true) end
 			sb_regunit[i] = Region(u:getX()-10,u:getY()-10,295,115)
 			if (debug_mode) then sb_regunit[i]:highlight(0.2) end
 			if (rX > u:getX()) then rX = u:getX() end
@@ -1489,7 +1575,7 @@ function defineSBreg()
 		end
 		findUnit = regionFindAllNoFindException(right_reg,IsReady)
 		for i,u in ipairs(findUnit) do
-			if (debug_mode) then u:highlight(0.2); runlog("Unit #"..i+3, true) end
+			if (debug_mode) then u:highlight(0.2); runlog("Unit #"..(i+3).." Match : "..u:getScore(), true) end
 			sb_regunit[i+3] = Region(u:getX()-10,u:getY()-10,295,115)
 			if (debug_mode) then sb_regunit[i+3]:highlight(0.2) end
 			if (rX > u:getX()) then rX = u:getX() end
@@ -1529,8 +1615,7 @@ function smartBattle()
 		if(existsL(revive,0)) then break end
 		if(existsL(results_big,0)) then break end
 		usePreviousSnap(false)
-		if (debug_mode) then runlog("State : "..state,true) end
-		if(state == 0 and bottom_reg:exists(IsReady,0)) then		-- 0-9 are states for first smart battle handling
+		if(state == 0 and sb_reg:exists(IsReady,0)) then		-- 0-9 are states for first smart battle handling
 			wait(0.1)
 			smartBattle_choose(sb_skilluse, sb_skillmp)
 			wait(0.05+lagx*0.05)
@@ -1564,14 +1649,18 @@ function smartBattle()
 			usePreviousSnap(true)
 			if(use_smart_battle_boss and existsL(boss,0)) then
 				state = 20
-			elseif(bottom_reg:exists(IsReady,0)) then
+			elseif(sb_reg:exists(IsReady,0)) then
 				existsClickL(repeatbtn,0)
 				round = round + 1
 			end
-		elseif(state == 20 and bottom_reg:exists(IsReady,0)) then
+		elseif(state == 20 and sb_reg:exists(IsReady,0)) then
 			wait(0.1)
 			smartBattle_choose(sb_skilluse_boss, sb_skillmp_boss)
 			wait(0.05+lagx*0.05)
+			if(use_smart_battle_boss_companion) then
+				smartBattle_companion(use_smart_battle_boss_companion_mp)
+				wait(0.05+lagx*0.05)
+			end
 			existsClickL(autobtn,0)
 			wait(0.05+lagx*0.05)
 			existsClickL(autoonbtn,0)
@@ -1582,10 +1671,14 @@ function smartBattle()
 			else
 				state = 29
 			end
-		elseif(state == 21 and bottom_reg:exists(IsReady,0)) then
+		elseif(state == 21 and sb_reg:exists(IsReady,0)) then
 			wait(0.1)
 			smartBattle_choose(sb_skilluse_boss2, sb_skillmp_boss2)
 			wait(0.05+lagx*0.05)
+			if(use_smart_battle_boss_companion_2nd) then
+				smartBattle_companion(use_smart_battle_boss_companion_2nd_mp)
+				wait(0.05+lagx*0.05)
+			end
 			existsClickL(autobtn,0)
 			wait(0.05+lagx*0.05)
 			existsClickL(autoonbtn,0)
@@ -1594,7 +1687,7 @@ function smartBattle()
 			round = round + 1		
 		elseif(state == 29) then				
 			usePreviousSnap(true)
-			if(bottom_reg:exists(IsReady,0)) then
+			if(sb_reg:exists(IsReady,0)) then
 				existsClickL(repeatbtn,0)
 				round = round + 1
 			end
@@ -1602,300 +1695,9 @@ function smartBattle()
 	end
 end
 
-------------------------------------------------------------------------------------------------------------
--------------------------------------------- MAIN FUNCTION START -------------------------------------------
-------------------------------------------------------------------------------------------------------------
+-- Help screen
 
--- Check version of AnkuLua first.
-ALver, ALpro = getALVer()
-	
-dialogInit()
-farmList = {}
-
-for i,v in pairsByKeys(special_farm) do
-	farmList[#farmList+1] = i
-end
-for i,v in pairsByKeys(farm) do
-	farmList[#farmList+1] = i
-end
-for i,v in pairsByKeys(custom) do
-	farmList[#farmList+1] = v
-end
-
-addTextView("Farm location:")
-addSpinner("farmloc",farmList,"earth_shrine_entrance")
-newRow()
-addCheckBox("loot", "Find Battle?", false)
-if (ALpro) then addCheckBox("dimscreen", "Dim screen?", false) else dimscreen = false end
-newRow()
---newRow()
-addCheckBox("debug_mode", "Debug mode?", false)
-addCheckBox("refill", "Refill Energy?", false)
-newRow()
-addCheckBox("continue_on_gameover", "Retry on GameOver (No Lapis)?", true)
-newRow()
-addTextView("Companion mode :")
-addRadioGroup("comp_mode", 1)
-addRadioButton("Any", 1)
-addRadioButton("Use Bonus", 2)
-addRadioButton("Highest ATK", 3)
-newRow()
-addTextView("Battle mode :")
-addRadioGroup("battle_mode", 1)
-addRadioButton("Auto (Default)", 1)
-addRadioButton("Use Espers", 2)
-addRadioButton("Custom (Dungeons Only)", 3)
-newRow()
-addTextView("Swipe mode")
-addRadioGroup("trace_mode",1)
-addRadioButton("1 (Preferred)",1)
-addRadioButton("2 (Alternative)",2)
---addRadioButton("3",3)
-newRow()
-addTextView("Use Click for step:")
-addRadioGroup("step_mode",1)
-addRadioButton("Single (Preferred)",1)
-addRadioButton("Always (Slow)",2)
-newRow()
-addTextView("Device Lag multiplier:")
-addEditNumber("lagx",1.3)
-newRow()
-addTextView("Depart count (99999 for infinite) :")
-addEditNumber("max_depart_count",99999)
-newRow()
-addCheckBox("help_screen", "Show help?", false)
-
-dialogShow(ver)
-
-if (battle_mode == 3) then
-	skillsList = {}
-
-	for i,v in pairsByKeys(sb_skills) do
-		skillsList[#skillsList+1] = i
-	end
-
-	use_smart_battle = true
-
-	dialogInit()
-	addTextView("Set unit skill icons and MP usage below : ")
-	newRow()
-	newRow()
-	addTextView("Will only be used in dungeons.")
-	if (ALver >= "6.8.0") then
-		newRow()
-		addSeparator()
-		newRow()
-	else
-		newRow()
-		newRow()
-		newRow()
-	end
-	addTextView("1st Battle Actions : ")
-	newRow()
-	newRow()
-	addTextView("Unit 1 :")
-	addSpinner("unit1",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit1mp",0)
-	newRow()
-	addTextView("Unit 2 :")
-	addSpinner("unit2",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit2mp",0)
-	newRow()
-	addTextView("Unit 3 :")
-	addSpinner("unit3",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit3mp",0)
-	newRow()
-	addTextView("Unit 4 :")
-	addSpinner("unit4",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit4mp",0)
-	newRow()
-	addTextView("Unit 5 :")
-	addSpinner("unit5",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit5mp",0)
-	newRow()
-	newRow()
-	newRow()
-	addCheckBox("use_smart_battle_2nd", "Use 2nd battle skills?", true)
-	newRow()
-	addTextView("Use 2nd battle skillset after this many actions :")
-	addEditNumber("use_smart_battle_2nd_round",3)
-	newRow()
-	newRow()
-	addTextView("2nd Battle Actions : ")
-	newRow()
-	newRow()
-	addTextView("Unit 1 :")
-	addSpinner("unit1z",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit1zmp",0)
-	newRow()
-	addTextView("Unit 2 :")
-	addSpinner("unit2z",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit2zmp",0)
-	newRow()
-	addTextView("Unit 3 :")
-	addSpinner("unit3z",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit3zmp",0)
-	newRow()
-	addTextView("Unit 4 :")
-	addSpinner("unit4z",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit4zmp",0)
-	newRow()
-	addTextView("Unit 5 :")
-	addSpinner("unit5z",skillsList,"None")
-	addTextView("MP :")
-	addEditNumber("unit5zmp",0)
-	newRow()
-	newRow()
-	newRow()
-	addCheckBox("use_smart_battle_boss", "Use Boss Battle Skills?", true)
-
-	dialogShow("Custom Unit Actions")
-
-	if (use_smart_battle_boss) then
-	
-		dialogInit()
-		addTextView("Set unit skill icons and MP usage below : ")
-		newRow()
-		newRow()
-		addTextView("Will only be used in dungeons.")
-		if (ALver >= "6.8.0") then
-			newRow()
-			addSeparator()
-			newRow()
-		else
-			newRow()
-			newRow()
-			newRow()
-		end
-		addTextView("1st Boss Actions : ")
-		newRow()
-		newRow()
-		addTextView("Unit 1 :")
-		addSpinner("unit1b",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit1bmp",0)
-		newRow()
-		addTextView("Unit 2 :")
-		addSpinner("unit2b",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit2bmp",0)
-		newRow()
-		addTextView("Unit 3 :")
-		addSpinner("unit3b",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit3bmp",0)
-		newRow()
-		addTextView("Unit 4 :")
-		addSpinner("unit4b",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit4bmp",0)
-		newRow()
-		addTextView("Unit 5 :")
-		addSpinner("unit5b",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit5bmp",0)
-		newRow()
-		newRow()
-		newRow()
-		addCheckBox("use_smart_battle_boss_2nd", "Use 2nd boss battle skills?", true)
-		newRow()
-		newRow()
-		newRow()
-		addTextView("2nd Boss Actions : ")
-		newRow()
-		newRow()
-		addTextView("Unit 1 :")
-		addSpinner("unit1zb",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit1zbmp",0)
-		newRow()
-		addTextView("Unit 2 :")
-		addSpinner("unit2zb",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit2zbmp",0)
-		newRow()
-		addTextView("Unit 3 :")
-		addSpinner("unit3zb",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit3zbmp",0)
-		newRow()
-		addTextView("Unit 4 :")
-		addSpinner("unit4zb",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit4zbmp",0)
-		newRow()
-		addTextView("Unit 5 :")
-		addSpinner("unit5zb",skillsList,"None")
-		addTextView("MP :")
-		addEditNumber("unit5zbmp",0)
-		newRow()
-		newRow()
-		newRow()
-
-		dialogShow("Custom Boss Unit Actions")
-
-	end
-	
-	sb_skilluse[1] = unit1
-	sb_skilluse[2] = unit2
-	sb_skilluse[3] = unit3
-	sb_skilluse[4] = unit4
-	sb_skilluse[5] = unit5
-	
-	sb_skillmp[1] = unit1mp
-	sb_skillmp[2] = unit2mp
-	sb_skillmp[3] = unit3mp
-	sb_skillmp[4] = unit4mp
-	sb_skillmp[5] = unit5mp
-
-	sb_skilluse2[1] = unit1z
-	sb_skilluse2[2] = unit2z
-	sb_skilluse2[3] = unit3z
-	sb_skilluse2[4] = unit4z
-	sb_skilluse2[5] = unit5z
-	
-	sb_skillmp2[1] = unit1zmp
-	sb_skillmp2[2] = unit2zmp
-	sb_skillmp2[3] = unit3zmp
-	sb_skillmp2[4] = unit4zmp
-	sb_skillmp2[5] = unit5zmp
-
-	sb_skilluse_boss[1] = unit1b
-	sb_skilluse_boss[2] = unit2b
-	sb_skilluse_boss[3] = unit3b
-	sb_skilluse_boss[4] = unit4b
-	sb_skilluse_boss[5] = unit5b
-
-	sb_skillmp_boss[1] = unit1bmp
-	sb_skillmp_boss[2] = unit2bmp
-	sb_skillmp_boss[3] = unit3bmp
-	sb_skillmp_boss[4] = unit4bmp
-	sb_skillmp_boss[5] = unit5bmp
-
-	sb_skilluse_boss2[1] = unit1zb
-	sb_skilluse_boss2[2] = unit2zb
-	sb_skilluse_boss2[3] = unit3zb
-	sb_skilluse_boss2[4] = unit4zb
-	sb_skilluse_boss2[5] = unit5zb
-
-	sb_skillmp_boss2[1] = unit1zbmp
-	sb_skillmp_boss2[2] = unit2zbmp
-	sb_skillmp_boss2[3] = unit3zbmp
-	sb_skillmp_boss2[4] = unit4zbmp
-	sb_skillmp_boss2[5] = unit5zbmp
-
-	end
-
-if (help_screen) then
+function helpscreen()
 	dialogInit()
 	addTextView("Welcome to ffbeAuto Z Help Screen")
 	if (ALver >= "6.8.0") then
@@ -1925,6 +1727,200 @@ if (help_screen) then
 	end
 	addTextView("Thank you and enjoy.")	
 	dialogShow("Help")
+end
+
+-- Custom Battle Menu
+-- NOTE THAT skilltable and mptable ARE strings. 'cause addSpinner only accept strings.
+-- AnkuLua remembers unique spinner variables between sessions, and token is used to differentiate them.
+
+function cbattlemenu(skilltable, mptable, titletype, token)
+	skillsList = {}
+
+	for i,v in pairsByKeys(sb_skills) do
+		skillsList[#skillsList+1] = i
+	end
+
+	dialogInit()
+	addTextView("Set unit skill icons and MP usage below : ")
+	newRow()
+	newRow()
+	if (ALver >= "6.8.0") then
+		newRow()
+		addSeparator()
+		newRow()
+	else
+		newRow()
+		newRow()
+		newRow()
+	end
+	addTextView("Battle Actions : ")
+	newRow()
+	newRow()
+	addTextView("Unit 1 :")
+	addSpinner("skill1"..token,skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("mp1"..token,0)
+	newRow()
+	addTextView("Unit 2 :")
+	addSpinner("skill2"..token,skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("mp2"..token,0)
+	newRow()
+	addTextView("Unit 3 :")
+	addSpinner("skill3"..token,skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("mp3"..token,0)
+	newRow()
+	addTextView("Unit 4 :")
+	addSpinner("skill4"..token,skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("mp4"..token,0)
+	newRow()
+	addTextView("Unit 5 :")
+	addSpinner("skill5"..token,skillsList,"None")
+	addTextView("MP :")
+	addEditNumber("mp5"..token,0)
+	newRow()
+	newRow()
+	newRow()
+	dialogShow(titletype)
+	
+	skilltable[1] = _G["skill1"..token]
+	skilltable[2] = _G["skill2"..token]
+	skilltable[3] = _G["skill3"..token]
+	skilltable[4] = _G["skill4"..token]
+	skilltable[5] = _G["skill5"..token]
+	
+	mptable[1] = _G["mp1"..token]
+	mptable[2] = _G["mp2"..token]
+	mptable[3] = _G["mp3"..token]
+	mptable[4] = _G["mp4"..token]
+	mptable[5] = _G["mp5"..token]
+end
+
+------------------------------------------------------------------------------------------------------------
+-------------------------------------------- MAIN FUNCTION START -------------------------------------------
+------------------------------------------------------------------------------------------------------------
+
+-- Check version of AnkuLua first.
+ALver, ALpro = getALVer()
+
+if(ALver >= "6.9.0") then
+	setButtonPosition(0,0)
+else
+	toast("Old version of AnkuLua detected.")
+end
+
+dialogInit()
+farmList = {}
+
+for i,v in pairsByKeys(special_farm) do
+	farmList[#farmList+1] = i
+end
+for i,v in pairsByKeys(farm) do
+	farmList[#farmList+1] = i
+end
+for i,v in pairsByKeys(custom) do
+	farmList[#farmList+1] = v
+end
+
+addTextView("Farm location:")
+addSpinner("farmloc",farmList,"earth_shrine_entrance")
+newRow()
+addCheckBox("loot", "Find Battle?", false)
+if (ALpro) then addCheckBox("dimscreen", "Dim screen?", false) else dimscreen = false end
+newRow()
+addCheckBox("debug_mode", "Debug mode?", false)
+addCheckBox("refill", "Refill Energy?", false)
+newRow()
+addCheckBox("continue_on_gameover", "Retry on GameOver (No Lapis)?", true)
+newRow()
+addTextView("Companion mode :")
+addRadioGroup("comp_mode", 1)
+addRadioButton("Any", 1)
+addRadioButton("Use Bonus", 2)
+addRadioButton("Highest ATK", 3)
+newRow()
+addTextView("Battle mode :")
+addRadioGroup("battle_mode", 1)
+addRadioButton("Just press Auto", 1)
+addRadioButton("Use Espers", 2)
+addRadioButton("Custom (Dungeons Only)", 3)
+newRow()
+--[[
+addTextView("Swipe mode")
+addRadioGroup("trace_mode",1)
+addRadioButton("1 (Preferred)",1)
+addRadioButton("2 (Alternative)",2)
+newRow()
+addTextView("Use Click for step:")
+addRadioGroup("step_mode",1)
+addRadioButton("Single (Preferred)",1)
+addRadioButton("Always (Slow)",2)
+]]--
+newRow()
+addTextView("Device Lag multiplier:")
+addEditNumber("lagx",1.3)
+newRow()
+addTextView("Depart count (99999 for infinite) :")
+addEditNumber("max_depart_count",99999)
+newRow()
+addCheckBox("help_screen", "Show help?", false)
+
+dialogShow(ver)
+
+if(farmloc == "dungeon_finder") then selectDungeon() -- get custom dungeon location
+elseif(farmloc == "free_farm") then freeFarm() end 
+
+if (string.match(farmloc, "exploration") or string.match(farmloc, "custom_")) then 
+	toast("Explorations can't use Custom Battle, reverting to Esper mode")
+	battle_mode = 2
+elseif (battle_mode == 3) then
+
+	use_smart_battle = true
+
+	dialogInit()
+	addCheckBox("use_smart_battle_2nd", "Use different actions after x rounds below?", true)
+	newRow()
+	addTextView("\t\tRounds : ")
+	addEditNumber("use_smart_battle_2nd_round",3)
+	newRow()
+	newRow()
+	addCheckBox("use_smart_battle_boss", "Use different actions on BOSS?", true)
+	newRow()
+	addTextView("\t\t")
+	addCheckBox("use_smart_battle_boss_companion", "Use actions for companions on above?", true)
+	newRow()
+	addTextView("\t\t\t\tMP : ")
+	addEditNumber("use_smart_battle_boss_companion_mp",25)
+	newRow()
+	newRow()
+	addCheckBox("use_smart_battle_boss_2nd", "Use different actions on 2nd turn of BOSS?", true)
+	newRow()
+	addTextView("\t\t")
+	addCheckBox("use_smart_battle_boss_companion_2nd", "Use actions for companions on above?", true)
+	newRow()
+	addTextView("\t\t\t\tMP : ")
+	addEditNumber("use_smart_battle_boss_companion_2nd_mp",25)
+	dialogShow("Select custom actions to be performed")
+	
+	cbattlemenu(sb_skilluse,sb_skillmp,"Custom Battle - First Actions","a")
+
+	if(use_smart_battle_2nd) then
+		cbattlemenu(sb_skilluse2,sb_skillmp2,"Custom Battle - Actions after "..use_smart_battle_2nd_round.." turns","b")
+	end
+	
+	if(use_smart_battle_boss) then
+		cbattlemenu(sb_skilluse_boss,sb_skillmp_boss,"Custom Battle - Actions on Boss 1st turn","c")
+	end
+
+	if(use_smart_battle_boss_2nd) then
+		cbattlemenu(sb_skilluse_boss2,sb_skillmp_boss2,"Custom Battle - Actions on Boss 2nd turn","d")
+	end
+end
+
+if (help_screen) then
+	helpscreen()
 	scriptExit("Help Finished")
 end
 
@@ -1950,9 +1946,6 @@ if(bonus_unit_menu) then use_bonus_unit = true end
 if(battle_mode == 2) then use_esper_battle = true end
 if(comp_mode == 2) then use_bonus_unit = true end
 if(comp_mode == 3) then use_highest_atk_companion = true end
-
-if(farmloc == "dungeon_finder") then selectDungeon() -- get custom dungeon location
-elseif(farmloc == "free_farm") then freeFarm() end 
 
 if (height >= width) then aRatio = (height / width) / 1.6					-- Aspect ratio correction from 960 height 600 width which is 1.6 ratio
 else aRatio = (width / height) / 1.6
